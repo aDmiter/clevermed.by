@@ -1,0 +1,70 @@
+/* BEM: Admin doctor switcher (appointments calendar) */
+.admin-doctor-picker {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-doctor-picker__label {
+  margin-bottom: 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+.admin-doctor-picker__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+.admin-doctor-picker__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  width: 5.5rem;
+  padding: 0.5rem;
+  border-radius: 0.75rem;
+  border: 2px solid var(--color-neutral-border);
+  background: white;
+  text-align: center;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.admin-doctor-picker__item:hover {
+  border-color: color-mix(in srgb, var(--color-primary-green) 40%, var(--color-neutral-border));
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-primary-dark) 8%, transparent);
+}
+
+.admin-doctor-picker__item--active {
+  border-color: var(--color-primary-green);
+  background: color-mix(in srgb, var(--color-secondary-mint) 65%, white);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--color-primary-green) 18%, transparent);
+}
+
+.admin-doctor-picker__photo {
+  position: relative;
+  width: 3.5rem;
+  height: 3.5rem;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: var(--color-secondary-mint);
+}
+
+.admin-doctor-picker__name {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--color-primary-dark);
+}
+
+.admin-doctor-picker__item--active .admin-doctor-picker__name {
+  color: var(--color-primary-green);
+}

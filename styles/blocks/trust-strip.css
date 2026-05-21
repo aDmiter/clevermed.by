@@ -1,0 +1,42 @@
+/* BEM: Trust strip marquee */
+.trust-strip {
+  background: #ffffff;
+  padding: 2.5rem 0;
+  border-top: 1px solid var(--color-neutral-border);
+  border-bottom: 1px solid var(--color-neutral-border);
+}
+
+.trust-strip__track {
+  display: flex;
+  gap: 3rem;
+  align-items: center;
+  white-space: nowrap;
+  width: max-content;
+  animation: trust-scroll 30s linear infinite;
+}
+
+.trust-strip__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0.5;
+  filter: grayscale(100%);
+  transition:
+    opacity 0.3s ease,
+    filter 0.3s ease;
+  cursor: default;
+}
+
+.trust-strip__item:hover {
+  opacity: 1;
+  filter: grayscale(0%);
+}
+
+@keyframes trust-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-33.33%);
+  }
+}

@@ -1,0 +1,251 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum AppointmentSource {
+  ONLINE
+  PHONE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ServiceCategory {
+  id           String               @id @default(cuid())
+  name         String
+  slug         String               @unique
+  sortOrder    Int                  @default(0)
+  durationId   String?
+  duration     AppointmentDuration? @relation(fields: [durationId], references: [id], onDelete: SetNull)
+  services     Service[]
+  doctors      DoctorCategory[]
+  appointments Appointment[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+}
+
+model Service {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  categoryId  String
+  category    ServiceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  title       String
+  amount      Decimal         @default(0) @db.Decimal(10, 2)
+  currency    String          @default("BYN")
+  shortDesc   String          @default("") @db.Text
+  description String          @default("") @db.LongText
+  preparation String?         @db.LongText
+  sortOrder   Int             @default(0)
+  published   Boolean         @default(true)
+  prices      Price[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([categoryId, sortOrder])
+}
+
+model DoctorCategory {
+  doctorId   String
+  categoryId String
+  doctor     Doctor          @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  category   ServiceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([doctorId, categoryId])
+}
+
+model Price {
+  id        String   @id @default(cuid())
+  serviceId String
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  title     String
+  amount    Decimal  @db.Decimal(10, 2)
+  currency  String   @default("BYN")
+  includes  Json
+  sortOrder Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Длительности приёма (настройки сайта): 25 мин, 50 мин и т.д.
+model AppointmentDuration {
+  id         String      @id @default(cuid())
+  label      String
+  minutes    Int
+  sortOrder  Int         @default(0)
+  published  Boolean     @default(true)
+  procedures Procedure[]
+  categories ServiceCategory[]
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+}
+
+/// Процедура с фиксированной длительностью из справочника
+model Procedure {
+  id           String              @id @default(cuid())
+  title        String
+  durationId   String
+  duration     AppointmentDuration @relation(fields: [durationId], references: [id], onDelete: Restrict)
+  sortOrder    Int                 @default(0)
+  published    Boolean             @default(true)
+  doctors      DoctorProcedure[]
+  appointments Appointment[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+}
+
+model DoctorProcedure {
+  doctorId    String
+  procedureId String
+  doctor      Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  procedure   Procedure @relation(fields: [procedureId], references: [id], onDelete: Cascade)
+
+  @@id([doctorId, procedureId])
+}
+
+model Doctor {
+  id              String                  @id @default(cuid())
+  slug            String                  @unique
+  lastName        String
+  firstName       String
+  middleName      String?
+  name            String
+  medicalCategory String
+  specialty       String                  @default("")
+  education       String?                 @db.Text
+  bio             String                  @default("") @db.LongText
+  imageUrl        String?
+  experience      String?
+  achievements    Json?
+  sortOrder       Int                     @default(0)
+  published       Boolean                 @default(true)
+  procedures       DoctorProcedure[]
+  categories       DoctorCategory[]
+  availabilityDays DoctorAvailabilityDay[]
+  appointments    Appointment[]
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+}
+
+/// Конкретные дни приёма врача (даты из календаря админки)
+model DoctorAvailabilityDay {
+  id              String             @id @default(cuid())
+  doctorId        String
+  doctor          Doctor             @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  dateKey         String
+  durationMinutes Int
+  windows         Json
+  slots           AvailabilitySlot[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@unique([doctorId, dateKey])
+}
+
+/// Слоты, сгенерированные из окон работы и длительности приёма
+model AvailabilitySlot {
+  id            String                @id @default(cuid())
+  dayId         String
+  day           DoctorAvailabilityDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  startsAt      DateTime
+  endsAt        DateTime
+  appointment   Appointment?
+
+  @@unique([dayId, startsAt])
+  @@index([startsAt])
+}
+
+model Appointment {
+  id              String            @id @default(cuid())
+  doctorId        String
+  doctor          Doctor            @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  categoryId      String?
+  category        ServiceCategory?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  procedureId     String?
+  procedure       Procedure?        @relation(fields: [procedureId], references: [id], onDelete: SetNull)
+  slotId          String?           @unique
+  slot            AvailabilitySlot? @relation(fields: [slotId], references: [id], onDelete: SetNull)
+  startsAt        DateTime
+  endsAt          DateTime
+  durationMinutes Int               @default(25)
+  patientName     String
+  patientPhone    String
+  patientEmail    String?
+  patientComment  String?           @db.Text
+  adminNotes      String?           @db.Text
+  status          AppointmentStatus @default(CONFIRMED)
+  source          AppointmentSource @default(ONLINE)
+  createdById     String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([doctorId, startsAt])
+  @@index([startsAt])
+}
+
+model Review {
+  id         String       @id @default(cuid())
+  authorName String
+  text       String       @db.LongText
+  rating     Int          @default(5)
+  status     ReviewStatus @default(PENDING)
+  videoUrl   String?
+  avatarUrl  String?
+  featured   Boolean      @default(false)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+model Partner {
+  id        String   @id @default(cuid())
+  name      String
+  logoUrl   String?
+  sortOrder Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AboutContent {
+  id            String   @id @default("default")
+  missionQuote  String   @db.LongText
+  missionAuthor String?
+  timeline      Json
+  updatedAt     DateTime @updatedAt
+}
+
+model ContactInfo {
+  id        String   @id @default("default")
+  address   String
+  phone     String
+  email     String
+  hours     Json
+  mapLat    Float?
+  mapLng    Float?
+  updatedAt DateTime @updatedAt
+}
