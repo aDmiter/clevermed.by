@@ -48,6 +48,7 @@ touch tmp/restart.txt
 | Домен | https://clevermed.by |
 | Папка на сервере | `~/clevermed.by/clevermed-by/` |
 | Node в PATH | `~/clevermed.by/clevermed-by/.node/bin` |
+| Минимум Node | **20.19+** (Prisma 7.8; `20.18.x` — ошибка при `npm install`) |
 | `.htaccess` Passenger | `~/clevermed.by/.htaccess` |
 | MySQL БД | `admite_clevereac` |
 | MySQL пользователь | `admite_clevereac` |
@@ -79,11 +80,24 @@ PassengerAppEnv production
 SetEnv HOSTNAME 127.0.0.1
 ```
 
+**Node 20.18 не подходит.** Если `node -v` показывает `v20.18.x`, обновите (один раз):
+
+```bash
+cd ~/clevermed.by/clevermed-by
+chmod +x scripts/beget-install-node.sh
+./scripts/beget-install-node.sh
+export PATH=~/clevermed.by/clevermed-by/.node/bin:$PATH
+node -v
+```
+
+Должно быть `v20.19.1` или выше (можно `NODE_VERSION=24.15.0 ./scripts/beget-install-node.sh`).
+
 **Деплой Clevermed (первый раз или после смены зависимостей):**
 
 ```bash
 export PATH=~/clevermed.by/clevermed-by/.node/bin:$PATH
 cd ~/clevermed.by/clevermed-by
+rm -rf node_modules
 npm install
 npm run build
 npx prisma db push
@@ -208,6 +222,8 @@ touch tmp/restart.txt
 | Ошибка БД | `%` или `&` в пароле URL | URL-encode в `DATABASE_URL` |
 | Сброс контента | `db:seed` на проде | не запускать без явной просьбы |
 | Сборка падает | мало RAM | `experimental.cpus: 1` |
+| `Prisma only supports Node.js 20.19+` | Node 20.18 в `.node` | `./scripts/beget-install-node.sh`, затем `rm -rf node_modules && npm install` |
+| `EBADENGINE` Prisma | то же | обновить Node, не игнорировать |
 
 ---
 
