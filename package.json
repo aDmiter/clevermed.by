@@ -21,6 +21,7 @@
     "db:apply-analytics": "prisma db execute --file prisma/migrations/20260522140000_site_analytics/migration.sql",
     "db:setup": "npm run db:apply-rbac && prisma db seed",
     "db:seed": "prisma db seed",
+    "db:publish": "tsx scripts/publish-public-content.ts",
     "auth:reset-admin": "tsx scripts/reset-admin-password.ts",
     "postinstall": "prisma generate"
   },

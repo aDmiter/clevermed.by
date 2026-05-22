@@ -39,6 +39,8 @@ mkdir -p tmp && touch tmp/restart.txt
 Добавить `npx prisma db push` только если менялся `prisma/schema.prisma`.  
 **Не запускать** `npm run db:seed` на проде без явной просьбы (затирает данные/админа).
 
+**Админка есть, на сайте пусто:** публичные страницы показывают только записи с `published: true`. После импорта БД выполните `npm run db:publish`.
+
 ---
 
 ## Параметры: Clevermed.by
