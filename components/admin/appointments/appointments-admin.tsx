@@ -41,7 +41,6 @@ function valuesToBody(values: AppointmentFormValues) {
   return {
     doctorId: values.doctorId,
     categoryId: values.categoryId || null,
-    procedureId: null,
     slotId: null,
     startsAt: values.timeKey,
     patientName: values.patientName,
@@ -309,10 +308,10 @@ export function AppointmentsAdmin() {
                 >
                   <span className="font-medium">
                     {a.displayTime} — {a.patientName}
-                    {(a.categoryTitle ?? a.procedureTitle) && (
+                    {a.categoryTitle && (
                       <span className="text-primary-green">
                         {" "}
-                        · {a.categoryTitle ?? a.procedureTitle}
+                        · {a.categoryTitle}
                       </span>
                     )}
                   </span>

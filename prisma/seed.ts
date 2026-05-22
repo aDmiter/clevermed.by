@@ -4,14 +4,36 @@ import { formatDoctorName, parseFullName } from "../lib/doctors";
 import { prisma } from "../lib/prisma";
 
 async function main() {
-  const email = process.env.ADMIN_EMAIL ?? "admin@clevermed.by";
-  const password = process.env.ADMIN_PASSWORD ?? "change-me-in-production";
+  const email = (process.env.ADMIN_EMAIL ?? "admin@clevermed.by")
+    .replace(/^"|"$/g, "")
+    .toLowerCase();
+  const login = (process.env.ADMIN_LOGIN ?? "superadmin")
+    .replace(/^"|"$/g, "")
+    .toLowerCase();
+  const password = process.env.ADMIN_PASSWORD ?? "ChangeMe!Secure2026";
   const passwordHash = await bcrypt.hash(password, 12);
 
   await prisma.user.upsert({
     where: { email },
-    update: { passwordHash },
-    create: { email, passwordHash, name: "Администратор" },
+    update: {
+      login,
+      passwordHash,
+      firstName: "Супер",
+      lastName: "Администратор",
+      role: "SUPER_ADMIN",
+      isActive: true,
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+    },
+    create: {
+      login,
+      email,
+      firstName: "Супер",
+      lastName: "Администратор",
+      passwordHash,
+      role: "SUPER_ADMIN",
+      isActive: true,
+    },
   });
 
   const categorySeed = [
@@ -319,52 +341,6 @@ async function main() {
       },
     });
     doctorIds.push(doctor.id);
-  }
-
-  const procConsult = await prisma.procedure.upsert({
-    where: { id: "proc-consult-25" },
-    update: { title: "Консультация невролога", durationId: duration25.id },
-    create: {
-      id: "proc-consult-25",
-      title: "Консультация невролога",
-      durationId: duration25.id,
-      sortOrder: 1,
-    },
-  });
-
-  const procEnmg = await prisma.procedure.upsert({
-    where: { id: "proc-enmg-50" },
-    update: { title: "ЭНМГ", durationId: duration50.id },
-    create: {
-      id: "proc-enmg-50",
-      title: "ЭНМГ",
-      durationId: duration50.id,
-      sortOrder: 2,
-    },
-  });
-
-  for (const doctorId of doctorIds) {
-    await prisma.doctorProcedure.upsert({
-      where: {
-        doctorId_procedureId: {
-          doctorId,
-          procedureId: procConsult.id,
-        },
-      },
-      update: {},
-      create: { doctorId, procedureId: procConsult.id },
-    });
-    await prisma.doctorProcedure.upsert({
-      where: {
-        doctorId_procedureId: {
-          doctorId,
-          procedureId: procEnmg.id,
-        },
-      },
-      update: {},
-      create: { doctorId, procedureId: procEnmg.id },
-    });
-
   }
 
   // Дни приёма задаются вручную в админке (/admin/doctors) для каждого врача отдельно.

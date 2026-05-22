@@ -44,8 +44,6 @@ export async function PATCH(request: Request, context: RouteContext) {
   let endsAt = existing.endsAt;
   let durationMinutes = existing.durationMinutes;
   let slotId = data.slotId !== undefined ? data.slotId : existing.slotId;
-  let procedureId =
-    data.procedureId !== undefined ? data.procedureId : existing.procedureId;
   let categoryId =
     data.categoryId !== undefined ? data.categoryId : existing.categoryId;
 
@@ -83,7 +81,6 @@ export async function PATCH(request: Request, context: RouteContext) {
       }
       durationMinutes = category.duration.minutes;
       categoryId = category.id;
-      procedureId = null;
 
       const bookable = await assertBookableSlot({
         doctorId,
@@ -143,7 +140,6 @@ export async function PATCH(request: Request, context: RouteContext) {
         ? { adminNotes: data.adminNotes?.trim() || null }
         : {}),
       ...(data.categoryId !== undefined ? { categoryId: data.categoryId } : {}),
-      ...(data.procedureId !== undefined ? { procedureId: data.procedureId } : {}),
       slotId,
       ...(data.status ? { status: data.status } : {}),
       ...(data.source ? { source: data.source } : {}),
@@ -151,7 +147,6 @@ export async function PATCH(request: Request, context: RouteContext) {
     include: {
       doctor: { select: { name: true } },
       category: { select: { name: true } },
-      procedure: { select: { title: true } },
     },
   });
 
@@ -169,7 +164,6 @@ export async function PATCH(request: Request, context: RouteContext) {
     include: {
       doctor: { select: { name: true } },
       category: { select: { name: true } },
-      procedure: { select: { title: true } },
     },
   });
 

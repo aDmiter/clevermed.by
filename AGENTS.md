@@ -117,11 +117,16 @@ Plus Jakarta Sans (`app/layout.tsx`), поддержка кириллицы.
 
 `next/image` с `remotePatterns` для Unsplash в `next.config.ts`. В продакшене — URL из БД или `/public`.
 
-### Аутентификация
+### Аутентификация и RBAC
 
-- Credentials provider в `auth.ts`.
-- `middleware.ts` редиректит неавторизованных с `/admin/*` на `/admin/login`.
-- Сессия JWT.
+- Вход: **логин или email** + пароль (`/admin/login`). Без обхода через `.env` в production.
+- **Суперадминистратор** (`SUPER_ADMIN`) — полный доступ ко всем разделам.
+- **Администратор** (`ADMIN`) — доступ по матрице прав `UserPermission` (просмотр / изменение на раздел).
+- Разделы прав: `DASHBOARD`, `SERVICES`, `DOCTORS`, `ONLINE_BOOKINGS`, `APPOINTMENTS`, `SETTINGS`, `SEO`, `REVIEWS`, `CONTENT`, `USERS`.
+- Управление пользователями: `/admin/users` (только при праве `USERS` + write; назначать `SUPER_ADMIN` может только суперадмин).
+- Безопасность входа: bcrypt (12 раундов), блокировка после 5 ошибок (15 мин), rate-limit по IP, аудит `LoginAttempt`, единое сообщение об ошибке, timing-safe сравнение пароля.
+- Код: `lib/auth/rbac.ts`, `lib/auth/password.ts`, `lib/auth/login-security.ts`, `lib/auth/require-permission.ts`.
+- JWT-сессия 8 ч, обновление каждый час. Проверка прав в `middleware` + `requirePermission()` в server actions.
 
 ## 6. Развёртывание и локальный запуск
 
@@ -142,16 +147,18 @@ cp .env.example .env
 DATABASE_URL="mysql://USER:PASSWORD@localhost:3306/clevermed"
 AUTH_SECRET="..."   # openssl rand -base64 32
 AUTH_URL="http://localhost:3002"
-ADMIN_EMAIL="admin@clevermed.by"
-ADMIN_PASSWORD="..."
+ADMIN_LOGIN=superadmin
+ADMIN_EMAIL=admin@clevermed.by
+ADMIN_PASSWORD=ChangeMe!Secure2026
 ```
 
 **Prisma 7 + MySQL:** клиент создаётся через `@prisma/adapter-mariadb` в `lib/prisma.ts` (адаптер парсит `DATABASE_URL`). После `npm install` выполняется `prisma generate` (`postinstall`).
 
 ```bash
 npm install
-npm run db:migrate    # или db:push для прототипа
+npm run db:apply-rbac # RBAC без shadow DB (локально, если migrate dev падает P3014)
 npm run db:seed
+# db:migrate — только если есть SHADOW_DATABASE_URL или права CREATE DATABASE
 npm run dev
 ```
 
@@ -168,9 +175,13 @@ npm run start
 
 SEO для публичных страниц: `path` (ключ, напр. `/`, `/services/nevrologiya`), `title`, `description`. Админка: `/admin/seo`.
 
-### User
+### User / UserPermission / LoginAttempt
 
-Администратор CMS: `email`, `passwordHash`.
+`User`: `login`, `email`, `firstName`, `lastName`, `passwordHash`, `role` (SUPER_ADMIN | ADMIN), `isActive`, `failedLoginAttempts`, `lockedUntil`, `lastLoginAt`.
+
+`UserPermission`: `section`, `canRead`, `canWrite` (на пользователя).
+
+`LoginAttempt`: аудит попыток входа (`login`, `ip`, `success`).
 
 ### ServiceCategory / Service
 
@@ -200,13 +211,13 @@ Singleton `id: "default"`: `missionQuote`, `timeline` (JSON).
 
 Singleton `id: "default"`: `address`, `phone`, `email`, `hours` (JSON), `mapLat`, `mapLng`.
 
-### AppointmentDuration / Procedure / DoctorAvailabilityDay
+### AppointmentDuration / DoctorAvailabilityDay
 
-**Настройки сайта** (`/admin/settings`): длительности приёма (`AppointmentDuration`: 25, 50 мин) и процедуры (`Procedure` + привязка к врачам через `DoctorProcedure`).
+**Настройки сайта** (`/admin/settings`): длительности приёма (`AppointmentDuration`: 25, 50 мин). Привязка к услугам — в `/admin/services` (`ServiceCategory.durationId`).
 
 **Дни приёма врача** (кнопка «Дни приёма» в `/admin/doctors`): выбор дат в календаре, окна работы (например 8–13 и 14–18), длительность слота → автогенерация `AvailabilitySlot`.
 
-**Запись** (`Appointment`): `procedureId`, `slotId`, пациент, `source` ONLINE|PHONE. Публично: `/booking` (врач → процедура → дата → слот) или с карточки врача (процедура → …).
+**Запись** (`Appointment`): `categoryId`, `slotId`, пациент, `source` ONLINE|PHONE. Публично: `/booking` (врач → услуга из каталога → дата → слот).
 
 ## 8. Статус реализации
 

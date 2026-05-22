@@ -1,5 +1,5 @@
-import { SiteSettingsAdmin } from "@/components/admin/settings/site-settings-admin";
+import { redirect } from "next/navigation";
 
 export default function AdminSettingsPage() {
-  return <SiteSettingsAdmin />;
+  redirect("/admin/settings/general");
 }

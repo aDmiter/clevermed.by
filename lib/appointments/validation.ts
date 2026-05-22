@@ -20,17 +20,9 @@ export const durationBodySchema = z.object({
   published: z.boolean().optional(),
 });
 
-export const procedureBodySchema = z.object({
-  title: z.string().min(1),
-  durationId: z.string().min(1),
-  published: z.boolean().optional(),
-  doctorIds: z.array(z.string()).optional(),
-});
-
 export const appointmentBodySchema = z.object({
   doctorId: z.string().min(1),
   categoryId: z.string().optional().nullable(),
-  procedureId: z.string().optional().nullable(),
   slotId: z.string().optional().nullable(),
   startsAt: z.string().datetime({ message: "Некорректное время" }),
   durationMinutes: z.number().int().min(5).max(240).optional(),

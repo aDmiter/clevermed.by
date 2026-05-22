@@ -15,7 +15,6 @@ export async function GET() {
     include: {
       doctor: { select: { name: true } },
       category: { select: { name: true } },
-      procedure: { select: { title: true } },
     },
     orderBy: { createdAt: "desc" },
   });

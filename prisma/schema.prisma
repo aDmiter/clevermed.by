@@ -26,13 +26,63 @@ enum AppointmentSource {
   PHONE
 }
 
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+}
+
+enum AdminSection {
+  DASHBOARD
+  SERVICES
+  DOCTORS
+  ONLINE_BOOKINGS
+  APPOINTMENTS
+  SETTINGS
+  SEO
+  REVIEWS
+  CONTENT
+  USERS
+}
+
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  name         String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                  String           @id @default(cuid())
+  login               String           @unique
+  email               String           @unique
+  firstName           String
+  lastName            String
+  passwordHash        String
+  role                UserRole         @default(ADMIN)
+  isActive            Boolean          @default(true)
+  failedLoginAttempts Int              @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+  passwordChangedAt   DateTime         @default(now())
+  permissions         UserPermission[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+}
+
+model UserPermission {
+  id       String       @id @default(cuid())
+  userId   String
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  section  AdminSection
+  canRead  Boolean      @default(false)
+  canWrite Boolean      @default(false)
+
+  @@unique([userId, section])
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  login     String
+  ip        String?
+  userAgent String?  @db.Text
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([login, createdAt])
+  @@index([ip, createdAt])
 }
 
 model ServiceCategory {
@@ -99,33 +149,9 @@ model AppointmentDuration {
   minutes    Int
   sortOrder  Int         @default(0)
   published  Boolean     @default(true)
-  procedures Procedure[]
   categories ServiceCategory[]
   createdAt  DateTime          @default(now())
   updatedAt  DateTime          @updatedAt
-}
-
-/// Процедура с фиксированной длительностью из справочника
-model Procedure {
-  id           String              @id @default(cuid())
-  title        String
-  durationId   String
-  duration     AppointmentDuration @relation(fields: [durationId], references: [id], onDelete: Restrict)
-  sortOrder    Int                 @default(0)
-  published    Boolean             @default(true)
-  doctors      DoctorProcedure[]
-  appointments Appointment[]
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-}
-
-model DoctorProcedure {
-  doctorId    String
-  procedureId String
-  doctor      Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  procedure   Procedure @relation(fields: [procedureId], references: [id], onDelete: Cascade)
-
-  @@id([doctorId, procedureId])
 }
 
 model Doctor {
@@ -144,7 +170,6 @@ model Doctor {
   achievements    Json?
   sortOrder       Int                     @default(0)
   published       Boolean                 @default(true)
-  procedures       DoctorProcedure[]
   categories       DoctorCategory[]
   availabilityDays DoctorAvailabilityDay[]
   appointments    Appointment[]
@@ -186,8 +211,6 @@ model Appointment {
   doctor          Doctor            @relation(fields: [doctorId], references: [id], onDelete: Cascade)
   categoryId      String?
   category        ServiceCategory?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  procedureId     String?
-  procedure       Procedure?        @relation(fields: [procedureId], references: [id], onDelete: SetNull)
   slotId          String?           @unique
   slot            AvailabilitySlot? @relation(fields: [slotId], references: [id], onDelete: SetNull)
   startsAt        DateTime
@@ -252,9 +275,13 @@ model ContactInfo {
 
 /// Глобальные настройки публичного сайта (singleton)
 model SiteSettings {
-  id                    String   @id @default("default")
-  onlineBookingEnabled  Boolean  @default(true)
-  updatedAt             DateTime @updatedAt
+  id                     String   @id @default("default")
+  onlineBookingEnabled   Boolean  @default(true)
+  googleAnalyticsCounter String?
+  googleAnalyticsCode    String?  @db.Text
+  yandexMetrikaCounter   String?
+  yandexMetrikaCode      String?  @db.Text
+  updatedAt              DateTime @updatedAt
 }
 
 /// SEO title и description для публичных страниц (path — ключ, напр. "/" или "/services")

@@ -98,8 +98,6 @@ export function AppointmentForm({
     [categories, values.categoryId],
   );
 
-  const legacyProcedure = appointment?.procedureId && !appointment.categoryId;
-
   useEffect(() => {
     if (!values.doctorId) {
       setCategories([]);
@@ -243,13 +241,6 @@ export function AppointmentForm({
       <h2 className="mb-4 text-lg font-semibold text-primary-dark">
         {appointment ? "Редактирование записи" : "Новая запись"}
       </h2>
-
-      {legacyProcedure && appointment?.procedureTitle && (
-        <p className="mb-4 rounded-lg bg-neutral-bg px-3 py-2 text-sm text-primary-dark/70">
-          Старая запись по процедуре «{appointment.procedureTitle}». Выберите
-          услугу из каталога при сохранении.
-        </p>
-      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block sm:col-span-2">

@@ -39,7 +39,6 @@ async function fetchBlockingAppointments(
     include: {
       doctor: { select: { name: true } },
       category: { select: { name: true } },
-      procedure: { select: { title: true } },
     },
     orderBy: { startsAt: "asc" },
   });
@@ -80,7 +79,6 @@ export async function getAdminCalendarSlots(params: {
               include: {
                 doctor: { select: { name: true } },
                 category: { select: { name: true } },
-                procedure: { select: { title: true } },
               },
             },
           },

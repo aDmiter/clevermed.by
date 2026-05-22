@@ -11,5 +11,7 @@ export default defineConfig({
   },
   datasource: {
     url: process.env["DATABASE_URL"],
+    // Для `migrate dev`: создайте БД clevermed_shadow и укажите SHADOW_DATABASE_URL в .env
+    shadowDatabaseUrl: process.env["SHADOW_DATABASE_URL"],
   },
 });

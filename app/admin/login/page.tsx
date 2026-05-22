@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
+  const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,27 +19,27 @@ function LoginForm() {
 
     try {
       const result = await signIn("credentials", {
-        email,
+        login: login.trim(),
         password,
         redirect: false,
       });
 
       if (result?.error) {
         setError(
-          "Неверный email или пароль. Проверьте ADMIN_EMAIL и ADMIN_PASSWORD в .env или выполните npm run db:seed.",
+          "Неверный логин или пароль. После 5 неудачных попыток учётная запись блокируется на 15 минут. Сброс: npm run auth:reset-admin",
         );
         return;
       }
 
       if (!result?.ok) {
-        setError("Не удалось войти. Проверьте AUTH_SECRET и AUTH_URL в .env (порт 3002).");
+        setError("Не удалось войти. Обратитесь к администратору системы.");
         return;
       }
 
       const callback = searchParams.get("callbackUrl") ?? "/admin";
       window.location.href = callback;
     } catch {
-      setError("Ошибка сети при входе. Убедитесь, что сервер запущен (npm run dev).");
+      setError("Ошибка сети при входе. Проверьте подключение и повторите попытку.");
     } finally {
       setLoading(false);
     }
@@ -53,7 +53,9 @@ function LoginForm() {
       <h1 className="mb-2 text-2xl font-bold text-primary-dark">
         Вход в админ-панель
       </h1>
-      <p className="mb-8 text-sm text-primary-dark/60">Clevermed CMS</p>
+      <p className="mb-8 text-sm text-primary-dark/60">
+        Защищённый доступ к CMS Clevermed
+      </p>
 
       {error && (
         <p className="mb-4 rounded-lg bg-accent-warmth/10 px-3 py-2 text-sm text-accent-warmth">
@@ -62,13 +64,13 @@ function LoginForm() {
       )}
 
       <label className="mb-4 block">
-        <span className="mb-1 block text-sm font-medium">Email</span>
+        <span className="mb-1 block text-sm font-medium">Логин или email</span>
         <input
-          type="email"
+          type="text"
           required
           autoComplete="username"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={login}
+          onChange={(e) => setLogin(e.target.value)}
           className="w-full rounded-xl border border-neutral-border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-primary-green/30"
         />
       </label>
@@ -92,11 +94,6 @@ function LoginForm() {
       >
         {loading ? "Вход…" : "Войти"}
       </Button>
-
-      <p className="mt-6 text-center text-xs text-primary-dark/50">
-        В dev можно войти с учётными данными из .env, даже если MySQL ещё не
-        настроен.
-      </p>
     </form>
   );
 }

@@ -15,6 +15,10 @@ export const metadata: Metadata = {
   },
   description:
     "Медицинский центр Clevermed: неврология, УЗИ, ЭНМГ и лабораторная диагностика в спокойной, технологичной среде.",
+  icons: {
+    icon: "/images/favicon.ico",
+    shortcut: "/images/favicon.ico",
+  },
 };
 
 export default function RootLayout({

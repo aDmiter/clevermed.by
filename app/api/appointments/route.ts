@@ -11,7 +11,7 @@ import {
 } from "@/lib/appointments/validation";
 
 const publicBodySchema = appointmentBodySchema
-  .omit({ procedureId: true, slotId: true, durationMinutes: true })
+  .omit({ slotId: true, durationMinutes: true })
   .extend({
     categoryId: z.string().min(1, "Выберите услугу"),
     startsAt: z.string().datetime({ message: "Некорректное время" }),
@@ -79,7 +79,6 @@ export async function POST(request: Request) {
     data: {
       doctorId: data.doctorId,
       categoryId: category.id,
-      procedureId: null,
       slotId: null,
       startsAt,
       endsAt,

@@ -43,10 +43,10 @@ export async function DELETE(_request: Request, context: RouteContext) {
   if (!session) return unauthorizedResponse();
 
   const { id } = await context.params;
-  const used = await prisma.procedure.count({ where: { durationId: id } });
+  const used = await prisma.serviceCategory.count({ where: { durationId: id } });
   if (used > 0) {
     return NextResponse.json(
-      { error: "Длительность используется в процедурах" },
+      { error: "Длительность используется в категориях услуг" },
       { status: 409 },
     );
   }

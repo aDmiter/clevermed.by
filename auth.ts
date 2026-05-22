@@ -1,39 +1,21 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/auth.config";
+import {
+  isAccountLocked,
+  isIpRateLimited,
+  recordLoginAttempt,
+  registerFailedLogin,
+  resetFailedLogins,
+} from "@/lib/auth/login-security";
+import { verifyPasswordSafe } from "@/lib/auth/password";
+import { toAuthUser, findUserByLoginOrEmail } from "@/lib/auth/user-repository";
 
 const credentialsSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
+  login: z.string().min(1).max(128),
+  password: z.string().min(1).max(128),
 });
-
-async function authorizeWithDatabase(email: string, password: string) {
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return null;
-
-  const valid = await bcrypt.compare(password, user.passwordHash);
-  if (!valid) return null;
-
-  return { id: user.id, email: user.email, name: user.name };
-}
-
-function authorizeWithEnv(email: string, password: string) {
-  if (process.env.NODE_ENV === "production") return null;
-
-  const adminEmail = process.env.ADMIN_EMAIL?.replace(/^"|"$/g, "");
-  const adminPassword = process.env.ADMIN_PASSWORD?.replace(/^"|"$/g, "");
-  if (!adminEmail || !adminPassword) return null;
-  if (email !== adminEmail || password !== adminPassword) return null;
-
-  return {
-    id: "env-admin",
-    email: adminEmail,
-    name: "Администратор",
-  };
-}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -42,23 +24,97 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        login: { label: "Логин", type: "text" },
+        password: { label: "Пароль", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const parsed = credentialsSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
-        const { email, password } = parsed.data;
+        const { login, password } = parsed.data;
+        const ip =
+          request?.headers?.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+          request?.headers?.get("x-real-ip") ??
+          null;
+        const userAgent = request?.headers?.get("user-agent") ?? null;
 
-        try {
-          const fromDb = await authorizeWithDatabase(email, password);
-          if (fromDb) return fromDb;
-        } catch (error) {
-          console.error("[auth] Database unavailable:", error);
+        if (await isIpRateLimited(ip)) {
+          await recordLoginAttempt({
+            login,
+            success: false,
+            ip,
+            userAgent,
+          });
+          return null;
         }
 
-        return authorizeWithEnv(email, password);
+        let user: Awaited<ReturnType<typeof findUserByLoginOrEmail>> = null;
+
+        try {
+          user = await findUserByLoginOrEmail(login);
+        } catch (error) {
+          console.error("[auth] Database error:", error);
+          await recordLoginAttempt({
+            login,
+            success: false,
+            ip,
+            userAgent,
+          });
+          return null;
+        }
+
+        if (!user || !user.isActive) {
+          await verifyPasswordSafe(password, null);
+          await recordLoginAttempt({
+            login,
+            success: false,
+            ip,
+            userAgent,
+          });
+          return null;
+        }
+
+        if (isAccountLocked(user.lockedUntil)) {
+          await recordLoginAttempt({
+            login,
+            success: false,
+            ip,
+            userAgent,
+          });
+          return null;
+        }
+
+        const valid = await verifyPasswordSafe(password, user.passwordHash);
+
+        if (!valid) {
+          await registerFailedLogin(user.id);
+          await recordLoginAttempt({
+            login,
+            success: false,
+            ip,
+            userAgent,
+          });
+          return null;
+        }
+
+        await resetFailedLogins(user.id);
+        await recordLoginAttempt({
+          login: user.login,
+          success: true,
+          ip,
+          userAgent,
+        });
+
+        const authUser = toAuthUser(user);
+        return {
+          id: authUser.id,
+          login: authUser.login,
+          email: authUser.email,
+          firstName: authUser.firstName,
+          lastName: authUser.lastName,
+          role: authUser.role,
+          permissions: authUser.permissions,
+        };
       },
     }),
   ],

@@ -2,7 +2,6 @@ import type {
   Appointment,
   AppointmentDuration,
   Doctor,
-  Procedure,
   ServiceCategory,
 } from "@/app/generated/prisma/client";
 import { formatDateTimeInClinic } from "./clinic-time";
@@ -13,8 +12,6 @@ export type AppointmentDto = {
   doctorName: string;
   categoryId: string | null;
   categoryTitle: string | null;
-  procedureId: string | null;
-  procedureTitle: string | null;
   slotId: string | null;
   startsAt: string;
   endsAt: string;
@@ -36,7 +33,6 @@ export function serializeAppointment(
   appointment: Appointment & {
     doctor?: Pick<Doctor, "name">;
     category?: Pick<ServiceCategory, "name"> | null;
-    procedure?: Pick<Procedure, "title"> | null;
   },
 ): AppointmentDto {
   return {
@@ -45,8 +41,6 @@ export function serializeAppointment(
     doctorName: appointment.doctor?.name ?? "",
     categoryId: appointment.categoryId,
     categoryTitle: appointment.category?.name ?? null,
-    procedureId: appointment.procedureId,
-    procedureTitle: appointment.procedure?.title ?? null,
     slotId: appointment.slotId,
     startsAt: appointment.startsAt.toISOString(),
     endsAt: appointment.endsAt.toISOString(),
@@ -80,34 +74,5 @@ export function serializeDuration(d: AppointmentDuration): DurationDto {
     minutes: d.minutes,
     published: d.published,
     sortOrder: d.sortOrder,
-  };
-}
-
-export type ProcedureDto = {
-  id: string;
-  title: string;
-  durationId: string;
-  durationLabel: string;
-  durationMinutes: number;
-  published: boolean;
-  sortOrder: number;
-  doctorIds: string[];
-};
-
-export function serializeProcedure(
-  p: Procedure & {
-    duration: AppointmentDuration;
-    doctors?: { doctorId: string }[];
-  },
-): ProcedureDto {
-  return {
-    id: p.id,
-    title: p.title,
-    durationId: p.durationId,
-    durationLabel: p.duration.label,
-    durationMinutes: p.duration.minutes,
-    published: p.published,
-    sortOrder: p.sortOrder,
-    doctorIds: p.doctors?.map((d) => d.doctorId) ?? [],
   };
 }

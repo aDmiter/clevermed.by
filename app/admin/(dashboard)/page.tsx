@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 
+type Props = {
+  searchParams: Promise<{ error?: string }>;
+};
+
 async function getStats() {
   try {
     const [services, doctors, pendingReviews, todayAppointments, onlineQueue] =
@@ -40,8 +44,10 @@ async function getStats() {
   }
 }
 
-export default async function AdminDashboardPage() {
+export default async function AdminDashboardPage({ searchParams }: Props) {
   const stats = await getStats();
+  const params = await searchParams;
+  const forbidden = params.error === "forbidden";
 
   return (
     <div>
@@ -49,6 +55,12 @@ export default async function AdminDashboardPage() {
       <p className="mb-8 text-primary-dark/60">
         Краткая сводка по контенту публичного сайта
       </p>
+
+      {forbidden && (
+        <div className="mb-8 rounded-xl border border-accent-warmth/30 bg-accent-warmth/10 px-4 py-3 text-sm text-accent-warmth">
+          У вас нет прав для доступа к запрошенному разделу.
+        </div>
+      )}
 
       {!stats.dbConnected && (
         <div className="mb-8 rounded-xl border border-accent-warmth/30 bg-accent-warmth/10 px-4 py-3 text-sm">

@@ -45,7 +45,6 @@ export async function POST(request: Request, context: RouteContext) {
     include: {
       doctor: { select: { name: true } },
       category: { select: { name: true } },
-      procedure: { select: { title: true } },
     },
   });
 

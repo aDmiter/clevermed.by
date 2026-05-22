@@ -56,7 +56,6 @@ export async function GET(request: Request) {
     include: {
       doctor: { select: { name: true } },
       category: { select: { name: true } },
-      procedure: { select: { title: true } },
     },
     orderBy: { startsAt: "asc" },
   });
@@ -85,7 +84,6 @@ export async function POST(request: Request) {
   let endsAt: Date;
   let durationMinutes: number;
   let slotId: string | null = data.slotId ?? null;
-  let procedureId: string | null = data.procedureId ?? null;
   let categoryId: string | null = data.categoryId ?? null;
 
   if (data.slotId) {
@@ -112,7 +110,6 @@ export async function POST(request: Request) {
       );
       if (category) {
         categoryId = category.id;
-        procedureId = null;
       }
     }
   } else {
@@ -128,7 +125,6 @@ export async function POST(request: Request) {
       }
       durationMinutes = category.duration.minutes;
       categoryId = category.id;
-      procedureId = null;
 
       const bookable = await assertBookableSlot({
         doctorId: data.doctorId,
@@ -142,17 +138,6 @@ export async function POST(request: Request) {
         );
       }
       endsAt = bookable.endsAt;
-    } else if (data.procedureId) {
-      const procedure = await prisma.procedure.findUnique({
-        where: { id: data.procedureId },
-        include: { duration: true },
-      });
-      if (!procedure) {
-        return NextResponse.json({ error: "Процедура не найдена" }, { status: 404 });
-      }
-      durationMinutes = procedure.duration.minutes;
-      procedureId = procedure.id;
-      endsAt = new Date(startsAt.getTime() + durationMinutes * 60 * 1000);
     } else {
       durationMinutes = data.durationMinutes ?? 25;
       endsAt = new Date(startsAt.getTime() + durationMinutes * 60 * 1000);
@@ -168,7 +153,6 @@ export async function POST(request: Request) {
     data: {
       doctorId: data.doctorId,
       categoryId,
-      procedureId,
       slotId,
       startsAt,
       endsAt,
@@ -185,7 +169,6 @@ export async function POST(request: Request) {
     include: {
       doctor: { select: { name: true } },
       category: { select: { name: true } },
-      procedure: { select: { title: true } },
     },
   });
 
@@ -205,7 +188,6 @@ export async function POST(request: Request) {
     include: {
       doctor: { select: { name: true } },
       category: { select: { name: true } },
-      procedure: { select: { title: true } },
     },
   });
 

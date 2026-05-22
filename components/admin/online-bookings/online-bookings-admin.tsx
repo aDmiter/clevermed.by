@@ -27,7 +27,7 @@ const fieldClass =
   "w-full rounded-lg border border-neutral-border bg-white px-3 py-2 text-sm text-primary-dark outline-none focus:border-primary-green focus:ring-2 focus:ring-primary-green/20";
 
 function serviceLabel(a: AppointmentDto): string {
-  return a.categoryTitle ?? a.procedureTitle ?? "—";
+  return a.categoryTitle ?? "—";
 }
 
 export function OnlineBookingsAdmin() {

@@ -9,8 +9,14 @@
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
     "db:push": "prisma db push",
+    "db:apply-rbac": "prisma db execute --file prisma/migrations/20260521120000_admin_rbac/migration.sql",
+    "db:apply-drop-procedures": "prisma db execute --file prisma/migrations/20260522130000_drop_procedures/migration.sql",
+    "db:apply-analytics": "prisma db execute --file prisma/migrations/20260522140000_site_analytics/migration.sql",
+    "db:setup": "npm run db:apply-rbac && prisma db seed",
     "db:seed": "prisma db seed",
+    "auth:reset-admin": "tsx scripts/reset-admin-password.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

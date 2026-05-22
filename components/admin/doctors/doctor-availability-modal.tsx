@@ -308,7 +308,7 @@ export function DoctorAvailabilityModal({
               {durations.length === 0 ? (
                 <p className="text-sm text-accent-warmth">
                   Сначала добавьте длительности в{" "}
-                  <a href="/admin/settings" className="underline">
+                  <a href="/admin/settings/general" className="underline">
                     настройках
                   </a>
                   .
