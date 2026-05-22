@@ -8,7 +8,8 @@ import {
   mergeAppointmentsIntoCalendarSlots,
   type CalendarSlotDto,
 } from "@/lib/appointments/calendar-view";
-import type { AppointmentDto, ProcedureDto } from "@/lib/appointments/serializer";
+import type { BookingCategoryDto } from "@/lib/service-serializer";
+import type { AppointmentDto } from "@/lib/appointments/serializer";
 import {
   addDaysToDateKey,
   localDateTimeToUtc,
@@ -39,9 +40,10 @@ async function parseError(res: Response) {
 function valuesToBody(values: AppointmentFormValues) {
   return {
     doctorId: values.doctorId,
-    procedureId: values.procedureId || null,
-    slotId: values.slotId || null,
-    startsAt: new Date().toISOString(),
+    categoryId: values.categoryId || null,
+    procedureId: null,
+    slotId: null,
+    startsAt: values.timeKey,
     patientName: values.patientName,
     patientPhone: values.patientPhone,
     patientEmail: values.patientEmail || null,
@@ -58,20 +60,12 @@ export function AppointmentsAdmin() {
   const [weekStart, setWeekStart] = useState(getCurrentWeekStart);
   const [appointments, setAppointments] = useState<AppointmentDto[]>([]);
   const [calendarSlots, setCalendarSlots] = useState<CalendarSlotDto[]>([]);
-  const [procedures, setProcedures] = useState<ProcedureDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<AppointmentDto | null | "new">(null);
   const [createDefaults, setCreateDefaults] = useState<CreateSlotDefaults>({});
   const [message, setMessage] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const weekInitForDoctor = useRef<string | null>(null);
-
-  const fetchSuggestedWeekStart = useCallback(async (doctorId: string) => {
-    const res = await fetch(`/api/admin/doctors/${doctorId}/availability/nearest`);
-    if (!res.ok) return getCurrentWeekStart();
-    const data = (await res.json()) as { weekStart?: string };
-    return data.weekStart ?? getCurrentWeekStart();
-  }, []);
 
   const loadDoctors = useCallback(async () => {
     const res = await fetch("/api/admin/doctors");
@@ -89,23 +83,6 @@ export function AppointmentsAdmin() {
       setSelectedDoctorId(list[0].id);
     }
   }, [selectedDoctorId]);
-
-  const loadProcedures = useCallback(async () => {
-    const res = await fetch("/api/admin/settings/procedures");
-    if (!res.ok) return;
-    const data = await res.json();
-    setProcedures(data.procedures ?? []);
-  }, []);
-
-  const procedureIdForDuration = useCallback(
-    (durationMinutes: number, doctorId: string) =>
-      procedures.find(
-        (p) =>
-          p.durationMinutes === durationMinutes &&
-          p.doctorIds.includes(doctorId),
-      )?.id,
-    [procedures],
-  );
 
   const loadWeekData = useCallback(async () => {
     if (!selectedDoctorId) {
@@ -151,18 +128,14 @@ export function AppointmentsAdmin() {
 
   useEffect(() => {
     void loadDoctors();
-    void loadProcedures();
-  }, [loadDoctors, loadProcedures]);
+  }, [loadDoctors]);
 
   useEffect(() => {
     if (!selectedDoctorId) return;
     if (weekInitForDoctor.current === selectedDoctorId) return;
     weekInitForDoctor.current = selectedDoctorId;
-    void (async () => {
-      const suggested = await fetchSuggestedWeekStart(selectedDoctorId);
-      setWeekStart(suggested);
-    })();
-  }, [selectedDoctorId, fetchSuggestedWeekStart]);
+    setWeekStart(getCurrentWeekStart());
+  }, [selectedDoctorId]);
 
   useEffect(() => {
     void loadWeekData();
@@ -195,19 +168,32 @@ export function AppointmentsAdmin() {
     await loadWeekData();
   }
 
-  function openCreateForm(defaults: CreateSlotDefaults) {
-    const slot = defaults.slotId
-      ? calendarSlots.find((s) => s.id === defaults.slotId)
+  async function openCreateForm(defaults: CreateSlotDefaults) {
+    const slot = defaults.startsAt
+      ? calendarSlots.find(
+          (s) => s.startsAt === defaults.startsAt && s.kind === "empty",
+        )
       : undefined;
-    const procedureId =
-      defaults.procedureId ??
-      (slot
-        ? procedureIdForDuration(slot.durationMinutes, selectedDoctorId)
-        : undefined);
+
+    let categoryId = defaults.categoryId;
+    if (!categoryId && slot?.durationMinutes) {
+      const res = await fetch(
+        `/api/appointments/services?doctorId=${selectedDoctorId}`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const cats = data.categories as BookingCategoryDto[];
+        categoryId = cats.find(
+          (c) => c.durationMinutes === slot.durationMinutes,
+        )?.id;
+      }
+    }
+
     setCreateDefaults({
-      date: defaults.date,
-      slotId: defaults.slotId,
-      procedureId,
+      date: defaults.date ?? slot?.dateKey,
+      startsAt: defaults.startsAt,
+      slotLabel: defaults.slotLabel ?? slot?.label,
+      categoryId,
     });
     setEditing("new");
   }
@@ -245,6 +231,7 @@ export function AppointmentsAdmin() {
           onChange={(id) => {
             weekInitForDoctor.current = null;
             setSelectedDoctorId(id);
+            setWeekStart(getCurrentWeekStart());
             setEditing(null);
           }}
         />
@@ -263,15 +250,16 @@ export function AppointmentsAdmin() {
           <AppointmentForm
             key={
               editing === "new"
-                ? `new-${createDefaults.date}-${createDefaults.slotId ?? ""}`
+                ? `new-${createDefaults.date}-${createDefaults.startsAt ?? ""}`
                 : editing.id
             }
             doctors={doctors}
             appointment={editing === "new" ? null : editing}
             defaultDoctorId={selectedDoctorId}
             defaultDate={createDefaults.date ?? toDateKey(new Date())}
-            defaultSlotId={createDefaults.slotId}
-            defaultProcedureId={createDefaults.procedureId}
+            defaultStartsAt={createDefaults.startsAt}
+            defaultSlotLabel={createDefaults.slotLabel}
+            defaultCategoryId={createDefaults.categoryId}
             onCancel={() => setEditing(null)}
             onSubmit={async (values) => {
               await saveAppointment(
@@ -321,8 +309,11 @@ export function AppointmentsAdmin() {
                 >
                   <span className="font-medium">
                     {a.displayTime} — {a.patientName}
-                    {a.procedureTitle && (
-                      <span className="text-primary-green"> · {a.procedureTitle}</span>
+                    {(a.categoryTitle ?? a.procedureTitle) && (
+                      <span className="text-primary-green">
+                        {" "}
+                        · {a.categoryTitle ?? a.procedureTitle}
+                      </span>
                     )}
                   </span>
                   <span className="text-primary-dark/50">

@@ -5,10 +5,10 @@ export const BY_PHONE_DIGITS_LEN = 9;
 export const BY_PHONE_PREFIX = "+375 (";
 
 /** Пример только локальной части — без +375. */
-export const BY_PHONE_LOCAL_PLACEHOLDER = "(29) 123-45-67";
+export const BY_PHONE_LOCAL_PLACEHOLDER = "(29) 239-22-27";
 
 /** Полный пример (подсказки, документация). */
-export const BY_PHONE_PLACEHOLDER = `${BY_PHONE_PREFIX}29) 123-45-67`;
+export const BY_PHONE_PLACEHOLDER = `${BY_PHONE_PREFIX}29) 239-22-27`;
 
 /** Извлекает до 9 цифр номера без кода страны. */
 export function digitsFromBelarusPhone(value: string): string {

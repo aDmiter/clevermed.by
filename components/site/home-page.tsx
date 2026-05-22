@@ -1,5 +1,6 @@
 "use client";
 
+import "@/styles/blocks/home-expertise.css";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
@@ -9,34 +10,49 @@ import {
   Brain,
   HeartPulse,
   ShieldCheck,
-  TestTube,
+  type LucideIcon,
 } from "lucide-react";
+import { getServiceBySlug } from "@/lib/services-catalog";
+import { useSiteBooking } from "@/components/providers/site-booking-provider";
 import { TrustStrip } from "@/components/site/trust-strip";
 
-const services = [
+type ExpertiseCard = {
+  id: string;
+  href: string;
+  icon: LucideIcon;
+  title: string;
+  desc: string;
+  featured?: boolean;
+};
+
+const expertiseCards: ExpertiseCard[] = [
   {
-    id: "neurology",
+    id: "nevrologiya",
+    href: "/services/nevrologiya",
     icon: Brain,
-    title: "Неврология",
-    desc: "Экспертная диагностика и лечение заболеваний нервной системы.",
+    title: "Центр неврологии",
+    desc:
+      getServiceBySlug("nevrologiya")?.listSummary ??
+      "Диагностика и лечение заболеваний нервной системы.",
+    featured: true,
   },
   {
-    id: "ultrasound",
+    id: "uzi-diagnostika",
+    href: "/services/uzi-diagnostika",
     icon: HeartPulse,
-    title: "УЗИ-диагностика",
-    desc: "Высокоточная визуализация для быстрых и надёжных выводов.",
+    title: getServiceBySlug("uzi-diagnostika")?.listTitle ?? "УЗИ-диагностика",
+    desc:
+      getServiceBySlug("uzi-diagnostika")?.listSummary ??
+      "Высокоточная визуализация для быстрых и надёжных выводов.",
   },
   {
-    id: "enmg",
+    id: "elektronejromiografiya-enmg",
+    href: "/services/elektronejromiografiya-enmg",
     icon: Activity,
-    title: "ЭНМГ",
-    desc: "Исследование электрической активности нервов и мышц.",
-  },
-  {
-    id: "lab",
-    icon: TestTube,
-    title: "Анализы",
-    desc: "Полный спектр лабораторных исследований с быстрыми результатами.",
+    title: getServiceBySlug("elektronejromiografiya-enmg")?.listTitle ?? "ЭНМГ",
+    desc:
+      getServiceBySlug("elektronejromiografiya-enmg")?.listSummary ??
+      "Исследование электрической активности нервов и мышц.",
   },
 ];
 
@@ -54,6 +70,8 @@ function CircleRating() {
 }
 
 export function HomePage() {
+  const { bookHref } = useSiteBooking();
+
   return (
     <div className="flex w-full flex-col">
       <section className="hero">
@@ -80,7 +98,7 @@ export function HomePage() {
             </p>
             <div className="flex flex-col gap-4 sm:flex-row">
               <Link
-                href="/booking"
+                href={bookHref}
                 className="group flex items-center justify-center gap-2 rounded-full bg-primary-green px-8 py-4 text-center text-lg font-medium text-white transition-all hover:bg-primary-dark hover:shadow-[0_8px_25px_rgba(1,97,67,0.25)] active:scale-95"
               >
                 Записаться на приём
@@ -140,64 +158,66 @@ export function HomePage() {
 
       <TrustStrip />
 
-      <section className="relative bg-neutral-bg py-24">
-        <div className="container mx-auto px-6">
-          <div className="mx-auto mb-16 max-w-2xl text-center">
-            <h2 className="mb-4 text-4xl font-bold text-primary-dark">
-              Наша экспертиза
-            </h2>
-            <p className="text-lg text-primary-dark/70">
+      <section className="home-expertise">
+        <div className="home-expertise__inner container mx-auto px-6">
+          <div className="home-expertise__head">
+            <h2 className="home-expertise__title">Наша экспертиза</h2>
+            <p className="home-expertise__lead">
               Комплексные неврологические и диагностические услуги для вашего
               комфорта и когнитивного спокойствия.
             </p>
           </div>
 
-          <div className="grid auto-rows-[250px] grid-cols-1 gap-6 md:grid-cols-3">
-            <Link
-              href="/services"
-              className="group relative flex flex-col justify-between overflow-hidden rounded-[2rem] border border-white/80 bg-white/60 p-8 shadow-sm backdrop-blur-[15px] transition-all hover:shadow-[0_10px_40px_rgba(0,0,0,0.08)] md:col-span-2 md:row-span-2"
-            >
-              <div className="absolute top-0 right-0 -mt-10 -mr-10 h-64 w-64 rounded-full bg-primary-green/5 blur-3xl transition-colors group-hover:bg-primary-green/10" />
-              <div>
-                <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary-mint text-primary-green transition-transform group-hover:scale-110">
-                  <Brain size={32} />
-                </div>
-                <h3 className="mb-4 text-3xl font-bold text-primary-dark">
-                  Центр неврологии
-                </h3>
-                <p className="max-w-md text-lg text-primary-dark/70 transition-colors group-hover:text-primary-dark">
-                  Диагностика и лечение заболеваний нервной системы в
-                  спокойной, безтревожной среде.
-                </p>
-              </div>
-              <div className="mt-8 flex items-center font-medium text-primary-green">
-                <span>Подробнее</span>
-                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-2" />
-              </div>
-            </Link>
+          <div className="home-expertise__grid">
+            {expertiseCards.map((card) => {
+              const Icon = card.icon;
+              const featured = card.featured === true;
 
-            {services.slice(1).map((srv) => (
-              <Link
-                key={srv.id}
-                href="/services"
-                className="group relative flex flex-col justify-between overflow-hidden rounded-[2rem] border border-white/80 bg-white/60 p-6 shadow-sm backdrop-blur-[15px] transition-all hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)]"
-              >
-                <div>
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-secondary-mint text-primary-green transition-transform group-hover:scale-110">
-                    <srv.icon size={24} />
+              return (
+                <Link
+                  key={card.id}
+                  href={card.href}
+                  className={
+                    featured
+                      ? "home-expertise__card home-expertise__card--featured"
+                      : "home-expertise__card"
+                  }
+                >
+                  {featured ? (
+                    <div className="home-expertise__card-glow" aria-hidden />
+                  ) : null}
+                  <div>
+                    <div
+                      className={
+                        featured
+                          ? "home-expertise__card-icon home-expertise__card-icon--lg"
+                          : "home-expertise__card-icon"
+                      }
+                    >
+                      <Icon size={featured ? 32 : 24} aria-hidden />
+                    </div>
+                    <h3 className="home-expertise__card-title">{card.title}</h3>
+                    <p className="home-expertise__card-desc">{card.desc}</p>
                   </div>
-                  <h3 className="mb-2 text-xl font-bold text-primary-dark">
-                    {srv.title}
-                  </h3>
-                  <p className="text-sm text-primary-dark/70">{srv.desc}</p>
-                </div>
-                <div className="mt-4 flex justify-end">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-green/10 text-primary-green transition-colors group-hover:bg-primary-green group-hover:text-white">
-                    <ArrowRight size={16} />
-                  </div>
-                </div>
-              </Link>
-            ))}
+                  {featured ? (
+                    <div className="home-expertise__card-more">
+                      <span>Подробнее</span>
+                      <ArrowRight
+                        size={20}
+                        className="home-expertise__card-more-icon"
+                        aria-hidden
+                      />
+                    </div>
+                  ) : (
+                    <div className="home-expertise__card-action">
+                      <span className="home-expertise__card-arrow" aria-hidden>
+                        <ArrowRight size={16} />
+                      </span>
+                    </div>
+                  )}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -208,16 +228,10 @@ export function HomePage() {
             <h2 className="mb-6 text-4xl font-bold text-primary-dark">
               Уверенность через спокойствие
             </h2>
-            <p className="mb-8 max-w-lg text-lg text-primary-dark/70">
-              Мы снижаем тревожность пациентов и создаём атмосферу исцеления.
-              Узнайте, что говорят о нас те, кто уже прошёл обследование.
+            <p className="max-w-lg text-lg text-primary-dark/70">
+              Мы снижаем тревожность пациентов и создаём атмосферу исцеления —
+              с понятными объяснениями и заботой на каждом этапе визита.
             </p>
-            <Link
-              href="/reviews"
-              className="inline-flex items-center gap-2 font-semibold text-primary-green transition-colors hover:text-primary-dark"
-            >
-              Все отзывы <ArrowRight size={20} />
-            </Link>
           </div>
 
           <div className="w-full max-w-md flex-1">

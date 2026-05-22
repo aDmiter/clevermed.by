@@ -3,6 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession, unauthorizedResponse } from "@/lib/admin-api";
 import { hasAppointmentConflict } from "@/lib/appointments/conflicts";
 import { serializeAppointment } from "@/lib/appointments/serializer";
+import { assertBookableSlot } from "@/lib/appointments/booking-slots";
+import { resolveDoctorServiceCategory } from "@/lib/appointments/category-booking";
+import { isPastSlotStart } from "@/lib/appointments/clinic-time";
+import {
+  linkAppointmentToAvailabilitySlot,
+  unlinkAppointmentFromSlot,
+} from "@/lib/appointments/slot-link";
+import { ACTIVE_APPOINTMENT_STATUSES } from "@/lib/appointments/conflicts";
 import {
   appointmentUpdateSchema,
   normalizePhone,
@@ -38,6 +46,8 @@ export async function PATCH(request: Request, context: RouteContext) {
   let slotId = data.slotId !== undefined ? data.slotId : existing.slotId;
   let procedureId =
     data.procedureId !== undefined ? data.procedureId : existing.procedureId;
+  let categoryId =
+    data.categoryId !== undefined ? data.categoryId : existing.categoryId;
 
   if (data.slotId) {
     const slot = await prisma.availabilitySlot.findUnique({
@@ -51,13 +61,46 @@ export async function PATCH(request: Request, context: RouteContext) {
     ) {
       return NextResponse.json({ error: "Слот недоступен" }, { status: 409 });
     }
+    if (isPastSlotStart(slot.startsAt)) {
+      return NextResponse.json(
+        { error: "Нельзя записать на прошедшее время" },
+        { status: 409 },
+      );
+    }
     startsAt = slot.startsAt;
     endsAt = slot.endsAt;
     durationMinutes = slot.day.durationMinutes;
   } else if (data.startsAt) {
     startsAt = new Date(data.startsAt);
-    durationMinutes = data.durationMinutes ?? existing.durationMinutes;
-    endsAt = new Date(startsAt.getTime() + durationMinutes * 60 * 1000);
+
+    if (data.categoryId) {
+      const category = await resolveDoctorServiceCategory(
+        doctorId,
+        data.categoryId,
+      );
+      if (!category?.duration) {
+        return NextResponse.json({ error: "Услуга недоступна" }, { status: 404 });
+      }
+      durationMinutes = category.duration.minutes;
+      categoryId = category.id;
+      procedureId = null;
+
+      const bookable = await assertBookableSlot({
+        doctorId,
+        startsAt,
+        durationMinutes,
+      });
+      if (!bookable) {
+        return NextResponse.json(
+          { error: "Выбранное время недоступно" },
+          { status: 409 },
+        );
+      }
+      endsAt = bookable.endsAt;
+    } else {
+      durationMinutes = data.durationMinutes ?? existing.durationMinutes;
+      endsAt = new Date(startsAt.getTime() + durationMinutes * 60 * 1000);
+    }
   }
 
   if (
@@ -67,6 +110,14 @@ export async function PATCH(request: Request, context: RouteContext) {
       { error: "Это время уже занято" },
       { status: 409 },
     );
+  }
+
+  const timeChanged =
+    startsAt.getTime() !== existing.startsAt.getTime() ||
+    endsAt.getTime() !== existing.endsAt.getTime();
+  if (timeChanged && !data.slotId) {
+    await unlinkAppointmentFromSlot(id);
+    slotId = null;
   }
 
   const appointment = await prisma.appointment.update({
@@ -91,6 +142,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       ...(data.adminNotes !== undefined
         ? { adminNotes: data.adminNotes?.trim() || null }
         : {}),
+      ...(data.categoryId !== undefined ? { categoryId: data.categoryId } : {}),
       ...(data.procedureId !== undefined ? { procedureId: data.procedureId } : {}),
       slotId,
       ...(data.status ? { status: data.status } : {}),
@@ -103,7 +155,27 @@ export async function PATCH(request: Request, context: RouteContext) {
     },
   });
 
-  return NextResponse.json({ appointment: serializeAppointment(appointment) });
+  const status = data.status ?? appointment.status;
+  if (
+    !slotId &&
+    timeChanged &&
+    (ACTIVE_APPOINTMENT_STATUSES as readonly string[]).includes(status)
+  ) {
+    await linkAppointmentToAvailabilitySlot(id, doctorId, startsAt);
+  }
+
+  const saved = await prisma.appointment.findUnique({
+    where: { id },
+    include: {
+      doctor: { select: { name: true } },
+      category: { select: { name: true } },
+      procedure: { select: { title: true } },
+    },
+  });
+
+  return NextResponse.json({
+    appointment: serializeAppointment(saved ?? appointment),
+  });
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {

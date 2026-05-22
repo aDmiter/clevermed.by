@@ -1,0 +1,222 @@
+/* BEM: Home — «Наша экспертиза» */
+.home-expertise {
+  position: relative;
+  background: var(--color-neutral-bg);
+  padding: 6rem 0;
+}
+
+.home-expertise__head {
+  max-width: 42rem;
+  margin: 0 auto 4rem;
+  text-align: center;
+}
+
+.home-expertise__title {
+  margin-bottom: 1rem;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 800;
+  color: var(--color-primary-dark);
+}
+
+.home-expertise__lead {
+  font-size: 1.125rem;
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--color-primary-dark) 70%, transparent);
+}
+
+.home-expertise__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  auto-rows: 250px;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .home-expertise__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.home-expertise__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  border-radius: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.6);
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(15px);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.home-expertise__card:hover {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  transform: translateY(-4px);
+}
+
+.home-expertise__card--featured {
+  padding: 2rem;
+  isolation: isolate;
+  background-image: url("/images/neurology-bg.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+.home-expertise__card--featured::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(255, 255, 255, 0.82) 45%,
+    rgba(230, 244, 239, 0.45) 70%,
+    rgba(10, 31, 26, 0.12) 100%
+  );
+  transition: opacity 0.3s ease;
+}
+
+.home-expertise__card--featured:hover::before {
+  opacity: 0.92;
+}
+
+.home-expertise__card--featured > * {
+  position: relative;
+  z-index: 1;
+}
+
+.home-expertise__card--featured:hover {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  transform: none;
+}
+
+@media (min-width: 768px) {
+  .home-expertise__card--featured {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+}
+
+.home-expertise__card-glow {
+  position: absolute;
+  top: -2.5rem;
+  right: -2.5rem;
+  width: 16rem;
+  height: 16rem;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--color-primary-green) 5%, transparent);
+  filter: blur(48px);
+  transition: background-color 0.3s ease;
+  pointer-events: none;
+}
+
+.home-expertise__card--featured:hover .home-expertise__card-glow {
+  background: color-mix(in srgb, var(--color-primary-green) 10%, transparent);
+}
+
+.home-expertise__card-icon {
+  display: flex;
+  height: 3rem;
+  width: 3rem;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  border-radius: 0.75rem;
+  background: var(--color-secondary-mint);
+  color: var(--color-primary-green);
+  transition: transform 0.25s ease;
+}
+
+.home-expertise__card:hover .home-expertise__card-icon {
+  transform: scale(1.1);
+}
+
+.home-expertise__card-icon--lg {
+  height: 4rem;
+  width: 4rem;
+  margin-bottom: 1.5rem;
+  border-radius: 1rem;
+}
+
+.home-expertise__card-title {
+  margin-bottom: 0.5rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+}
+
+.home-expertise__card--featured .home-expertise__card-title {
+  margin-bottom: 1rem;
+  font-size: 1.875rem;
+}
+
+.home-expertise__card:not(.home-expertise__card--featured) .home-expertise__card-title {
+  font-size: 1.25rem;
+}
+
+.home-expertise__card-desc {
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--color-primary-dark) 70%, transparent);
+}
+
+.home-expertise__card--featured .home-expertise__card-desc {
+  max-width: 28rem;
+  font-size: 1.125rem;
+  transition: color 0.2s ease;
+}
+
+.home-expertise__card--featured:hover .home-expertise__card-desc {
+  color: var(--color-primary-dark);
+}
+
+.home-expertise__card-more {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  color: var(--color-primary-green);
+}
+
+.home-expertise__card--featured .home-expertise__card-more {
+  margin-top: 2rem;
+}
+
+.home-expertise__card-more-icon {
+  margin-left: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.home-expertise__card--featured:hover .home-expertise__card-more-icon {
+  transform: translateX(0.5rem);
+}
+
+.home-expertise__card-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.home-expertise__card-arrow {
+  display: flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--color-primary-green) 10%, transparent);
+  color: var(--color-primary-green);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.home-expertise__card:hover .home-expertise__card-arrow {
+  background: var(--color-primary-green);
+  color: #ffffff;
+}

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getBookableSlotsForService } from "@/lib/appointments/booking-slots";
 import { isDateInBookingRange } from "@/lib/appointments/slots";
+import { isOnlineBookingEnabled } from "@/lib/require-online-booking";
 
 const querySchema = z.object({
   doctorId: z.string().min(1),
@@ -11,6 +12,10 @@ const querySchema = z.object({
 });
 
 export async function GET(request: Request) {
+  if (!(await isOnlineBookingEnabled())) {
+    return NextResponse.json({ slots: [] });
+  }
+
   const { searchParams } = new URL(request.url);
   const parsed = querySchema.safeParse({
     doctorId: searchParams.get("doctorId"),

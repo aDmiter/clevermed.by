@@ -249,3 +249,18 @@ model ContactInfo {
   mapLng    Float?
   updatedAt DateTime @updatedAt
 }
+
+/// Глобальные настройки публичного сайта (singleton)
+model SiteSettings {
+  id                    String   @id @default("default")
+  onlineBookingEnabled  Boolean  @default(true)
+  updatedAt             DateTime @updatedAt
+}
+
+/// SEO title и description для публичных страниц (path — ключ, напр. "/" или "/services")
+model PageSeo {
+  path        String   @id
+  title       String   @default("")
+  description String   @default("") @db.Text
+  updatedAt   DateTime @updatedAt
+}

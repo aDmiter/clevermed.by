@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getDoctorAvailabilityDatesForService } from "@/lib/appointments/booking-slots";
+import { isOnlineBookingEnabled } from "@/lib/require-online-booking";
 
 const querySchema = z.object({
   doctorId: z.string().min(1),
@@ -9,6 +10,10 @@ const querySchema = z.object({
 });
 
 export async function GET(request: Request) {
+  if (!(await isOnlineBookingEnabled())) {
+    return NextResponse.json({ dates: [] });
+  }
+
   const { searchParams } = new URL(request.url);
   const parsed = querySchema.safeParse({
     doctorId: searchParams.get("doctorId"),

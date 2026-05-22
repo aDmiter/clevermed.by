@@ -1,6 +1,7 @@
 import { auth, signOut } from "@/auth";
 import { OnlineBookingsQueueBell } from "@/components/admin/online-bookings-queue-bell";
 import { prisma } from "@/lib/prisma";
+import { getSiteSettings } from "@/lib/site-settings-server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -14,16 +15,17 @@ async function getOnlineQueueCount(): Promise<number> {
   }
 }
 
-const adminNav = [
+const adminNavBase = [
   { href: "/admin", label: "Дашборд" },
   { href: "/admin/services", label: "Услуги" },
   { href: "/admin/doctors", label: "Врачи" },
-  { href: "/admin/online-bookings", label: "Запись онлайн" },
+  { href: "/admin/online-bookings", label: "Запись онлайн", requiresOnlineBooking: true },
   { href: "/admin/appointments", label: "Запись на приём" },
   { href: "/admin/settings", label: "Настройки сайта" },
+  { href: "/admin/seo", label: "SEO / Meta" },
   { href: "/admin/reviews", label: "Отзывы" },
   { href: "/admin/content", label: "Контент" },
-];
+] as const;
 
 export default async function AdminDashboardLayout({
   children,
@@ -33,7 +35,16 @@ export default async function AdminDashboardLayout({
   const session = await auth();
   if (!session?.user) redirect("/admin/login");
 
-  const onlineQueueCount = await getOnlineQueueCount();
+  const [onlineQueueCount, siteSettings] = await Promise.all([
+    getOnlineQueueCount(),
+    getSiteSettings(),
+  ]);
+
+  const adminNav = adminNavBase.filter(
+    (item) =>
+      !("requiresOnlineBooking" in item && item.requiresOnlineBooking) ||
+      siteSettings.onlineBookingEnabled,
+  );
 
   return (
     <div className="flex min-h-screen">
@@ -77,7 +88,9 @@ export default async function AdminDashboardLayout({
         </Link>
       </aside>
       <div className="relative flex flex-1 flex-col">
-        <OnlineBookingsQueueBell initialCount={onlineQueueCount} />
+        {siteSettings.onlineBookingEnabled ? (
+          <OnlineBookingsQueueBell initialCount={onlineQueueCount} />
+        ) : null}
         <main className="flex-1 p-8 pr-16">{children}</main>
       </div>
     </div>

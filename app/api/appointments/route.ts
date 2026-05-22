@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { assertBookableSlot } from "@/lib/appointments/booking-slots";
 import { hasAppointmentConflict } from "@/lib/appointments/conflicts";
+import { linkAppointmentToAvailabilitySlot } from "@/lib/appointments/slot-link";
+import { getSiteSettings } from "@/lib/site-settings-server";
 import {
   appointmentBodySchema,
   normalizePhone,
@@ -26,6 +28,14 @@ export async function POST(request: Request) {
   }
 
   const data = parsed.data;
+
+  const siteSettings = await getSiteSettings();
+  if (!siteSettings.onlineBookingEnabled) {
+    return NextResponse.json(
+      { error: "Онлайн-запись на сайте отключена" },
+      { status: 403 },
+    );
+  }
 
   const category = await prisma.serviceCategory.findFirst({
     where: {
@@ -83,6 +93,12 @@ export async function POST(request: Request) {
     },
     include: { doctor: { select: { name: true } }, category: true },
   });
+
+  await linkAppointmentToAvailabilitySlot(
+    appointment.id,
+    data.doctorId,
+    startsAt,
+  );
 
   return NextResponse.json(
     {

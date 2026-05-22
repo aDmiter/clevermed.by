@@ -4,18 +4,24 @@ import {
 } from "@/components/site/appointment-booking";
 import { doctorToCard } from "@/lib/doctor-public";
 import { prisma } from "@/lib/prisma";
-import type { Metadata } from "next";
+import { metadataForPath } from "@/lib/page-seo-server";
+import { getSiteSettings } from "@/lib/site-settings-server";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Запись на приём",
-  description: "Онлайн-запись к врачам медицинского центра Clevermed",
-};
+export async function generateMetadata() {
+  return metadataForPath("/booking");
+}
 
 type PageProps = {
   searchParams: Promise<{ doctor?: string }>;
 };
 
 export default async function BookingPage({ searchParams }: PageProps) {
+  const settings = await getSiteSettings();
+  if (!settings.onlineBookingEnabled) {
+    redirect("/contacts");
+  }
+
   const { doctor: doctorSlug } = await searchParams;
   let doctors: BookingDoctor[] = [];
   let preselectedDoctorId: string | undefined;

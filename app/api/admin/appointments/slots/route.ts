@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdminSession, unauthorizedResponse } from "@/lib/admin-api";
-import { getAvailableSlotsForBooking } from "@/lib/appointments/availability-service";
-import { prisma } from "@/lib/prisma";
+import { getBookableSlotsForService } from "@/lib/appointments/booking-slots";
+import { resolveDoctorServiceCategory } from "@/lib/appointments/category-booking";
 
 const querySchema = z.object({
   doctorId: z.string().min(1),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  procedureId: z.string().optional(),
-  durationMinutes: z.coerce.number().optional(),
+  categoryId: z.string().min(1),
 });
 
 export async function GET(request: Request) {
@@ -19,31 +18,28 @@ export async function GET(request: Request) {
   const parsed = querySchema.safeParse({
     doctorId: searchParams.get("doctorId"),
     date: searchParams.get("date"),
-    procedureId: searchParams.get("procedureId") ?? undefined,
-    durationMinutes: searchParams.get("durationMinutes") ?? undefined,
+    categoryId: searchParams.get("categoryId"),
   });
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Укажите врача и дату" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Укажите врача, услугу и дату" },
+      { status: 400 },
+    );
   }
 
-  let minutes = parsed.data.durationMinutes;
-  if (parsed.data.procedureId) {
-    const procedure = await prisma.procedure.findUnique({
-      where: { id: parsed.data.procedureId },
-      include: { duration: true },
-    });
-    minutes = procedure?.duration.minutes;
+  const category = await resolveDoctorServiceCategory(
+    parsed.data.doctorId,
+    parsed.data.categoryId,
+  );
+  if (!category?.duration) {
+    return NextResponse.json({ error: "Услуга недоступна" }, { status: 404 });
   }
 
-  if (!minutes) {
-    return NextResponse.json({ error: "Укажите процедуру или длительность" }, { status: 400 });
-  }
-
-  const slots = await getAvailableSlotsForBooking({
+  const slots = await getBookableSlotsForService({
     doctorId: parsed.data.doctorId,
     dateKey: parsed.data.date,
-    procedureMinutes: minutes,
+    durationMinutes: category.duration.minutes,
   });
 
   return NextResponse.json({ slots });

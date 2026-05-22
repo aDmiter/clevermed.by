@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+import { metadataForPath } from "@/lib/page-seo-server";
 
-export const metadata: Metadata = {
-  title: "О нас",
-};
+export async function generateMetadata() {
+  return metadataForPath("/about");
+}
 
 export default function AboutPage() {
   return (

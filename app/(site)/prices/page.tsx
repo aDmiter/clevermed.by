@@ -1,28 +1,28 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { PricesPage as PricesPageView } from "@/components/site/prices-page";
+import {
+  fallbackPriceCategories,
+  fallbackPriceItems,
+} from "@/lib/prices";
+import { fetchPricesPageData } from "@/lib/prices-server";
+import { metadataForPath } from "@/lib/page-seo-server";
 
-export const metadata: Metadata = {
-  title: "Цены",
-};
+export async function generateMetadata() {
+  return metadataForPath("/prices");
+}
 
-export default function PricesPage() {
-  return (
-    <div className="bg-neutral-bg py-24">
-      <div className="container mx-auto max-w-3xl px-6 text-center">
-        <h1 className="mb-6 text-4xl font-bold text-primary-dark">Цены</h1>
-        <p className="mb-8 text-lg text-primary-dark/70">
-          Прозрачный прайс с карточками услуг, поиском и блоком «Что входит?»
-          будет подключён к базе данных после настройки MySQL и наполнения через
-          админ-панель.
-        </p>
-        <Link
-          href="/contacts"
-          className="inline-flex items-center gap-2 rounded-full bg-primary-green px-6 py-3 font-medium text-white hover:bg-primary-dark"
-        >
-          Записаться <ArrowRight size={18} />
-        </Link>
-      </div>
-    </div>
-  );
+export default async function PricesRoute() {
+  let items = fallbackPriceItems;
+  let categories = fallbackPriceCategories;
+
+  try {
+    const data = await fetchPricesPageData();
+    if (data.items.length > 0) {
+      items = data.items;
+      categories = data.categories;
+    }
+  } catch (error) {
+    console.error("[prices] Failed to load from database:", error);
+  }
+
+  return <PricesPageView items={items} categories={categories} />;
 }

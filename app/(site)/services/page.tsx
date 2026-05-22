@@ -1,9 +1,9 @@
 import { ServicesPage } from "@/components/site/services-page";
-import type { Metadata } from "next";
+import { metadataForPath } from "@/lib/page-seo-server";
 
-export const metadata: Metadata = {
-  title: "Услуги",
-};
+export async function generateMetadata() {
+  return metadataForPath("/services");
+}
 
 export default function ServicesRoute() {
   return <ServicesPage />;

@@ -7,18 +7,21 @@ import type { CalendarSlotDto } from "@/lib/appointments/calendar-view";
 import { SOURCE_LABELS, STATUS_LABELS } from "@/lib/appointments/labels";
 import {
   addDaysToDateKey,
-  startOfWeekDateKey,
+  formatWeekdayShort,
+  getDefaultCalendarAnchor,
+  isPastDateKey,
+  isPastSlotStart,
   toDateKey,
   weekDateKeys,
 } from "@/lib/appointments/clinic-time";
 import { cn } from "@/lib/utils";
 
-const DAY_NAMES = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-
 export type CreateSlotDefaults = {
   date?: string;
-  slotId?: string;
-  procedureId?: string;
+  /** ISO начала приёма (как в публичной записи) */
+  startsAt?: string;
+  slotLabel?: string;
+  categoryId?: string;
 };
 
 type AppointmentCalendarProps = {
@@ -50,9 +53,11 @@ export function AppointmentCalendar({
   onSelectAppointment,
   onCreateSlot,
 }: AppointmentCalendarProps) {
-  const weekKeys = weekDateKeys(weekStart);
-  const byDay = groupSlotsByDay(calendarSlots, weekKeys);
   const todayKey = toDateKey(new Date());
+  const weekKeys = weekDateKeys(weekStart);
+  const weekEnd = weekKeys[6];
+  const byDay = groupSlotsByDay(calendarSlots, weekKeys);
+  const atTodayAnchor = weekStart <= todayKey;
 
   return (
     <div className="admin-appt-cal">
@@ -61,13 +66,17 @@ export function AppointmentCalendar({
           type="button"
           variant="outline"
           size="icon-sm"
-          onClick={() => onWeekChange(addDaysToDateKey(weekStart, -7))}
+          onClick={() => {
+            const prev = addDaysToDateKey(weekStart, -7);
+            onWeekChange(prev < todayKey ? todayKey : prev);
+          }}
+          disabled={atTodayAnchor}
           aria-label="Предыдущая неделя"
         >
           <ChevronLeft size={16} />
         </Button>
         <p className="admin-appt-cal__week-title">
-          {weekKeys[0]} — {weekKeys[6]}
+          {weekKeys[0]} — {weekEnd}
         </p>
         <Button
           type="button"
@@ -92,33 +101,45 @@ export function AppointmentCalendar({
       </div>
 
       <div className="admin-appt-cal__grid">
-        {weekKeys.map((dateKey, i) => {
+        {weekKeys.map((dateKey) => {
           const daySlots = byDay.get(dateKey) ?? [];
           const isToday = dateKey === todayKey;
+          const isPastDay = isPastDateKey(dateKey);
 
           return (
             <div key={dateKey} className="admin-appt-cal__day">
               <button
                 type="button"
-                onClick={() => onCreateSlot({ date: dateKey })}
+                disabled={isPastDay}
+                onClick={() => !isPastDay && onCreateSlot({ date: dateKey })}
                 className={cn(
                   "admin-appt-cal__day-head",
                   isToday && "admin-appt-cal__day-head--today",
+                  isPastDay && "cursor-not-allowed opacity-40",
                 )}
               >
-                <span className="admin-appt-cal__day-name">{DAY_NAMES[i]}</span>
+                <span className="admin-appt-cal__day-name">
+                  {formatWeekdayShort(dateKey)}
+                </span>
                 <span className="admin-appt-cal__day-num">{dateKey.slice(8)}</span>
               </button>
               <div className="admin-appt-cal__slots">
                 {daySlots.length === 0 ? (
                   <p className="admin-appt-cal__empty-day">
-                    Нет слотов
-                    <br />
-                    <span className="text-primary-green">+ день</span>
+                    {isPastDay ? "—" : "Нет слотов"}
+                    {!isPastDay && (
+                      <>
+                        <br />
+                        <span className="text-primary-green">+ день</span>
+                      </>
+                    )}
                   </p>
                 ) : (
                   daySlots.map((slot) => {
                     if (slot.kind === "empty") {
+                      if (isPastSlotStart(new Date(slot.startsAt))) {
+                        return null;
+                      }
                       return (
                         <button
                           key={slot.id}
@@ -127,7 +148,8 @@ export function AppointmentCalendar({
                           onClick={() =>
                             onCreateSlot({
                               date: slot.dateKey,
-                              slotId: slot.id,
+                              startsAt: slot.startsAt,
+                              slotLabel: slot.label,
                             })
                           }
                         >
@@ -180,5 +202,5 @@ export function AppointmentCalendar({
 }
 
 export function getCurrentWeekStart(): string {
-  return startOfWeekDateKey(toDateKey(new Date()));
+  return getDefaultCalendarAnchor();
 }

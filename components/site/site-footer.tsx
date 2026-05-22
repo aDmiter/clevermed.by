@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { SITE_CONTACT } from "@/lib/site-contact";
 
 export function SiteFooter() {
   return (
@@ -23,6 +24,11 @@ export function SiteFooter() {
           <p className="site-footer__tagline">
             Неврология и диагностика в концепции OrganiTech — ясность, забота и
             технологичная прозрачность.
+          </p>
+          <p className="site-footer__license">
+            {SITE_CONTACT.licenseTitle}
+            <br />
+            {SITE_CONTACT.licenseErl}
           </p>
         </div>
 
@@ -56,16 +62,25 @@ export function SiteFooter() {
           <p className="site-footer__title">Контакты</p>
           <ul className="site-footer__list">
             <li>
-              <a href="tel:+375291234567" className="site-footer__link">
-                +375 (29) 123-45-67
+              <a
+                href={`tel:${SITE_CONTACT.phoneTel}`}
+                className="site-footer__link"
+              >
+                {SITE_CONTACT.phoneDisplay}
               </a>
             </li>
             <li>
-              <a href="mailto:info@clevermed.by" className="site-footer__link">
-                info@clevermed.by
+              <a
+                href={`mailto:${SITE_CONTACT.email}`}
+                className="site-footer__link"
+              >
+                {SITE_CONTACT.email}
               </a>
             </li>
-            <li className="site-footer__text">г. Минск, ул. Примерная, 1</li>
+            <li className="site-footer__text">{SITE_CONTACT.address}</li>
+            <li className="site-footer__text">
+              {SITE_CONTACT.hours[0].label} {SITE_CONTACT.hours[0].value}
+            </li>
           </ul>
         </div>
       </div>

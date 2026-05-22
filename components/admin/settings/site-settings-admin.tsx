@@ -16,6 +16,8 @@ const fieldClass =
   "w-full rounded-lg border border-neutral-border bg-white px-3 py-2 text-sm text-primary-dark outline-none focus:border-primary-green focus:ring-2 focus:ring-primary-green/20";
 
 export function SiteSettingsAdmin() {
+  const [onlineBookingEnabled, setOnlineBookingEnabled] = useState(true);
+  const [savingSite, setSavingSite] = useState(false);
   const [durations, setDurations] = useState<DurationDto[]>([]);
   const [procedures, setProcedures] = useState<ProcedureDto[]>([]);
   const [doctors, setDoctors] = useState<{ id: string; name: string }[]>([]);
@@ -32,17 +34,21 @@ export function SiteSettingsAdmin() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [dRes, pRes, docRes] = await Promise.all([
+      const [siteRes, dRes, pRes, docRes] = await Promise.all([
+        fetch("/api/admin/settings/site"),
         fetch("/api/admin/settings/durations"),
         fetch("/api/admin/settings/procedures"),
         fetch("/api/admin/doctors"),
       ]);
+      if (!siteRes.ok) await parseError(siteRes);
       if (!dRes.ok) await parseError(dRes);
       if (!pRes.ok) await parseError(pRes);
       if (!docRes.ok) await parseError(docRes);
+      const siteData = await siteRes.json();
       const dData = await dRes.json();
       const pData = await pRes.json();
       const docData = await docRes.json();
+      setOnlineBookingEnabled(Boolean(siteData.onlineBookingEnabled));
       setDurations(dData.durations);
       setProcedures(pData.procedures);
       setDoctors(
@@ -65,6 +71,31 @@ export function SiteSettingsAdmin() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  async function saveSiteSettings(enabled: boolean) {
+    setSavingSite(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/settings/site", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ onlineBookingEnabled: enabled }),
+      });
+      if (!res.ok) await parseError(res);
+      const data = await res.json();
+      setOnlineBookingEnabled(Boolean(data.onlineBookingEnabled));
+      setMessage(
+        data.onlineBookingEnabled
+          ? "Онлайн-запись на сайте включена"
+          : "Онлайн-запись отключена — кнопки «Записаться» ведут на страницу контактов",
+      );
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Ошибка");
+      void load();
+    } finally {
+      setSavingSite(false);
+    }
+  }
 
   async function addDuration() {
     const res = await fetch("/api/admin/settings/durations", {
@@ -132,7 +163,7 @@ export function SiteSettingsAdmin() {
       <div>
         <h1 className="text-2xl font-bold text-primary-dark">Настройки сайта</h1>
         <p className="mt-1 text-sm text-primary-dark/60">
-          Длительности приёма и процедуры для онлайн-записи
+          Публичный сайт, онлайн-запись и расписание приёма
         </p>
       </div>
 
@@ -141,6 +172,36 @@ export function SiteSettingsAdmin() {
           {message}
         </p>
       )}
+
+      <section className="rounded-xl border border-neutral-border bg-white/70 p-6">
+        <h2 className="mb-2 text-lg font-semibold text-primary-dark">
+          Запись на сайте
+        </h2>
+        <p className="mb-4 text-sm text-primary-dark/60">
+          Если опция выключена, все кнопки «Записаться» на сайте ведут на страницу
+          контактов. Разделы записи в админке остаются доступны.
+        </p>
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4 rounded border-neutral-border text-primary-green focus:ring-primary-green/30"
+            checked={onlineBookingEnabled}
+            disabled={savingSite}
+            onChange={(e) => void saveSiteSettings(e.target.checked)}
+          />
+          <span className="text-sm text-primary-dark">
+            <span className="font-medium">Использовать запись на сайте</span>
+            <span className="mt-1 block text-primary-dark/55">
+              Включить форму онлайн-записи для пациентов на странице /booking
+            </span>
+          </span>
+        </label>
+        {savingSite && (
+          <p className="mt-3 flex items-center gap-2 text-sm text-primary-dark/50">
+            <Loader2 className="animate-spin" size={16} /> Сохранение…
+          </p>
+        )}
+      </section>
 
       <section className="rounded-xl border border-neutral-border bg-white/70 p-6">
         <h2 className="mb-4 text-lg font-semibold text-primary-dark">

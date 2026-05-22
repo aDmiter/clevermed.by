@@ -164,6 +164,10 @@ npm run start
 
 ## 7. Схема базы данных (Prisma)
 
+### PageSeo
+
+SEO для публичных страниц: `path` (ключ, напр. `/`, `/services/nevrologiya`), `title`, `description`. Админка: `/admin/seo`.
+
 ### User
 
 Администратор CMS: `email`, `passwordHash`.
@@ -217,6 +221,7 @@ Singleton `id: "default"`: `address`, `phone`, `email`, `hours` (JSON), `mapLat`
 | Админ: запись на приём (календарь, CRUD) | ✅ |
 | Публичная онлайн-запись (`/booking`) | ✅ |
 | Админ: каталог услуг | ✅ |
+| Админ: SEO / Meta (title, description) | ✅ |
 | Админ: CRUD (остальное) | 🔲 заглушки |
 | Данные из БД на публичных страницах | 🔲 частично (врачи — из БД) |
 

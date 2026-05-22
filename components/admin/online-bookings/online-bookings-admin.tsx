@@ -7,6 +7,7 @@ import {
   Phone,
   RefreshCw,
   Globe,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ export function OnlineBookingsAdmin() {
   const [adminNotes, setAdminNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,6 +78,34 @@ export function OnlineBookingsAdmin() {
     }
   }, [selected?.id, selected?.adminNotes]);
 
+  async function deleteBooking() {
+    if (!selected) return;
+    if (
+      !confirm(
+        `Удалить заявку ${selected.patientName}? Время приёма снова станет доступным для записи.`,
+      )
+    ) {
+      return;
+    }
+    setDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/admin/online-appointments/${selected.id}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) await parseError(res);
+      setMessage(`Заявка ${selected.patientName} удалена`);
+      setAppointments((list) => list.filter((a) => a.id !== selected.id));
+      setSelectedId(null);
+      notifyOnlineQueueChanged();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Ошибка");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   async function confirmBooking() {
     if (!selected) return;
     setConfirming(true);
@@ -109,7 +139,7 @@ export function OnlineBookingsAdmin() {
           <p className="mt-1 text-sm text-primary-dark/60">
             Новые заявки с сайта со статусом «{ONLINE_QUEUE_STATUS_LABEL}».
             Перезвоните пациенту и нажмите «Подтвердить» — запись перейдёт в
-            общий календарь и исчезнет из этого списка.
+            общий календарь. Неподтверждённую заявку можно удалить.
           </p>
         </div>
         <Button type="button" variant="outline" onClick={() => void load()}>
@@ -265,21 +295,38 @@ export function OnlineBookingsAdmin() {
                 />
               </label>
 
-              <Button
-                className="mt-6 w-full sm:w-auto"
-                disabled={confirming}
-                onClick={() => void confirmBooking()}
-              >
-                {confirming ? (
-                  <Loader2 className="animate-spin" data-icon="inline-start" />
-                ) : (
-                  <Check data-icon="inline-start" size={16} />
-                )}
-                Подтвердить запись
-              </Button>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button
+                  className="w-full sm:w-auto"
+                  disabled={confirming || deleting}
+                  onClick={() => void confirmBooking()}
+                >
+                  {confirming ? (
+                    <Loader2 className="animate-spin" data-icon="inline-start" />
+                  ) : (
+                    <Check data-icon="inline-start" size={16} />
+                  )}
+                  Подтвердить запись
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="w-full sm:w-auto"
+                  disabled={confirming || deleting}
+                  onClick={() => void deleteBooking()}
+                >
+                  {deleting ? (
+                    <Loader2 className="animate-spin" data-icon="inline-start" />
+                  ) : (
+                    <Trash2 data-icon="inline-start" size={16} />
+                  )}
+                  Удалить запись
+                </Button>
+              </div>
               <p className="mt-3 text-xs text-primary-dark/45">
                 После подтверждения статус станет «Подтверждён», запись уйдёт
-                из этого списка и останется в календаре приёма.
+                из этого списка и останется в календаре приёма. Удаление
+                освобождает слот для других пациентов.
               </p>
             </div>
           )}

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession, unauthorizedResponse } from "@/lib/admin-api";
 import { serializeAppointment } from "@/lib/appointments/serializer";
+import { linkAppointmentToAvailabilitySlot } from "@/lib/appointments/slot-link";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -47,6 +48,14 @@ export async function POST(request: Request, context: RouteContext) {
       procedure: { select: { title: true } },
     },
   });
+
+  if (!appointment.slotId) {
+    await linkAppointmentToAvailabilitySlot(
+      appointment.id,
+      appointment.doctorId,
+      appointment.startsAt,
+    );
+  }
 
   return NextResponse.json({ appointment: serializeAppointment(appointment) });
 }

@@ -1,6 +1,15 @@
 import { prisma } from "@/lib/prisma";
 
-const ACTIVE_STATUSES = ["SCHEDULED", "CONFIRMED"] as const;
+export const ACTIVE_APPOINTMENT_STATUSES = ["SCHEDULED", "CONFIRMED"] as const;
+
+export function intervalsOverlap(
+  aStart: number,
+  aEnd: number,
+  bStart: number,
+  bEnd: number,
+): boolean {
+  return aStart < bEnd && bStart < aEnd;
+}
 
 export async function hasAppointmentConflict(
   doctorId: string,
@@ -11,7 +20,7 @@ export async function hasAppointmentConflict(
   const conflict = await prisma.appointment.findFirst({
     where: {
       doctorId,
-      status: { in: [...ACTIVE_STATUSES] },
+      status: { in: [...ACTIVE_APPOINTMENT_STATUSES] },
       ...(excludeId ? { NOT: { id: excludeId } } : {}),
       startsAt: { lt: endsAt },
       endsAt: { gt: startsAt },

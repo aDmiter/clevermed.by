@@ -1,9 +1,9 @@
 import { ContactsPage } from "@/components/site/contacts-page";
-import type { Metadata } from "next";
+import { metadataForPath } from "@/lib/page-seo-server";
 
-export const metadata: Metadata = {
-  title: "Контакты",
-};
+export async function generateMetadata() {
+  return metadataForPath("/contacts");
+}
 
 export default function ContactsRoute() {
   return <ContactsPage />;

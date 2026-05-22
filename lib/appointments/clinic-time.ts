@@ -142,3 +142,24 @@ export function startOfWeekDateKey(dateKey: string): string {
 export function weekDateKeys(weekStartKey: string): string[] {
   return Array.from({ length: 7 }, (_, i) => addDaysToDateKey(weekStartKey, i));
 }
+
+/** Левая граница календаря админки: сегодня и 6 следующих дней. */
+export function getDefaultCalendarAnchor(): string {
+  return toDateKey(new Date());
+}
+
+export function formatWeekdayShort(dateKey: string): string {
+  return new Intl.DateTimeFormat("ru-RU", {
+    timeZone: CLINIC_TIMEZONE,
+    weekday: "short",
+  }).format(dateKeyToUtcStart(dateKey));
+}
+
+/** Начало слота уже в прошлом (нельзя записать). */
+export function isPastSlotStart(startsAt: Date): boolean {
+  return startsAt.getTime() < Date.now();
+}
+
+export function isPastDateKey(dateKey: string): boolean {
+  return dateKey < toDateKey(new Date());
+}

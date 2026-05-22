@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { formatTimeInClinic, toDateKey } from "./clinic-time";
+import { formatTimeInClinic, isPastSlotStart, toDateKey } from "./clinic-time";
 import { generateSlotsFromWindows, type TimeWindow } from "./windows";
 
 export type CreateAvailabilityInput = {
@@ -76,7 +76,6 @@ export async function getAvailableSlotsForBooking(params: {
   procedureMinutes: number;
 }) {
   const { doctorId, dateKey, procedureMinutes } = params;
-  const now = new Date();
 
   const day = await prisma.doctorAvailabilityDay.findUnique({
     where: { doctorId_dateKey: { doctorId, dateKey } },
@@ -96,7 +95,7 @@ export async function getAvailableSlotsForBooking(params: {
     .filter(
       (slot) =>
         !slot.appointment &&
-        slot.startsAt > now &&
+        !isPastSlotStart(slot.startsAt) &&
         slot.endsAt.getTime() - slot.startsAt.getTime() ===
           procedureMinutes * 60 * 1000,
     )

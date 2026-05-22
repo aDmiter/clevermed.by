@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useSiteBooking } from "@/components/providers/site-booking-provider";
 import { Award, ArrowRight, BookOpen, Stethoscope } from "lucide-react";
 
 export type DoctorCard = {
@@ -47,6 +48,8 @@ type DoctorsPageProps = {
 };
 
 export function DoctorsPage({ doctors = fallbackDoctors }: DoctorsPageProps) {
+  const { doctorBookHref } = useSiteBooking();
+
   return (
     <div className="min-h-screen bg-neutral-bg py-24">
       <div className="container mx-auto px-6">
@@ -115,7 +118,7 @@ export function DoctorsPage({ doctors = fallbackDoctors }: DoctorsPageProps) {
                   ))}
                 </div>
                 <Link
-                  href={`/booking?doctor=${doctor.id}`}
+                  href={doctorBookHref(doctor.id)}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-green py-3 text-center font-medium text-white shadow-sm transition-colors hover:bg-primary-dark"
                 >
                   Записаться к врачу

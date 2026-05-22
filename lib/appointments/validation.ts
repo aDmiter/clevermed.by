@@ -29,6 +29,7 @@ export const procedureBodySchema = z.object({
 
 export const appointmentBodySchema = z.object({
   doctorId: z.string().min(1),
+  categoryId: z.string().optional().nullable(),
   procedureId: z.string().optional().nullable(),
   slotId: z.string().optional().nullable(),
   startsAt: z.string().datetime({ message: "Некорректное время" }),

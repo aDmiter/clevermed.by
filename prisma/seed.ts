@@ -226,17 +226,18 @@ async function main() {
 
   await prisma.contactInfo.upsert({
     where: { id: "default" },
-    update: {},
+    update: {
+      address: "г. Брест, просп. Республики, 16",
+      phone: "+375 (29) 239-22-27",
+      email: "info@clevermed.by",
+      hours: [{ label: "Пн – Сб:", value: "07:30 – 20:00" }],
+    },
     create: {
       id: "default",
-      address: "г. Минск, ул. Примерная, 1",
-      phone: "+375 (29) 123-45-67",
+      address: "г. Брест, просп. Республики, 16",
+      phone: "+375 (29) 239-22-27",
       email: "info@clevermed.by",
-      hours: [
-        { label: "Пн – Пт:", value: "8:00 – 20:00" },
-        { label: "Суббота:", value: "9:00 – 17:00" },
-        { label: "Воскресенье:", value: "только экстренные случаи" },
-      ],
+      hours: [{ label: "Пн – Сб:", value: "07:30 – 20:00" }],
     },
   });
 
@@ -367,6 +368,12 @@ async function main() {
   }
 
   // Дни приёма задаются вручную в админке (/admin/doctors) для каждого врача отдельно.
+
+  await prisma.siteSettings.upsert({
+    where: { id: "default" },
+    update: {},
+    create: { id: "default", onlineBookingEnabled: true },
+  });
 
   console.log(`Seed OK. Admin: ${email}`);
 }
