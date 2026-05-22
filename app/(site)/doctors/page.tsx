@@ -13,7 +13,11 @@ export default async function DoctorsRoute() {
     doctors = await fetchPublishedDoctors();
   } catch (error) {
     console.error("[doctors] Failed to load from database:", error);
-    doctors = undefined;
+    if (process.env.NODE_ENV !== "production") {
+      doctors = undefined;
+    } else {
+      doctors = [];
+    }
   }
 
   return <DoctorsPage doctors={doctors} />;

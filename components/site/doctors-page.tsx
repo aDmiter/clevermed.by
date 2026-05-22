@@ -63,6 +63,16 @@ export function DoctorsPage({ doctors = fallbackDoctors }: DoctorsPageProps) {
           </p>
         </div>
 
+        {doctors.length === 0 ? (
+          <p className="mx-auto max-w-lg text-center text-lg text-primary-dark/60">
+            Список врачей обновляется. Запишитесь через{" "}
+            <a href="/contacts" className="text-primary-green underline">
+              контакты
+            </a>
+            .
+          </p>
+        ) : null}
+
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {doctors.map((doctor) => (
             <div

@@ -22,7 +22,6 @@ export async function fetchPricesPageData(): Promise<{
           prices: {
             where: { published: true },
             orderBy: { sortOrder: "asc" },
-            take: 1,
           },
         },
       },
@@ -42,21 +41,31 @@ export async function fetchPricesPageData(): Promise<{
 
   for (const cat of rows) {
     for (const service of cat.services) {
-      const priceRow = service.prices[0];
-      const includes = priceRow
-        ? parseIncludes(priceRow.includes)
-        : service.shortDesc
-          ? [service.shortDesc]
-          : [];
+      if (service.prices.length > 0) {
+        for (const priceRow of service.prices) {
+          items.push({
+            id: priceRow.id,
+            categoryId: cat.id,
+            categoryName: cat.name,
+            categorySlug: cat.slug,
+            name: priceRow.title,
+            price: Number(priceRow.amount),
+            currency: priceRow.currency,
+            includes: parseIncludes(priceRow.includes),
+          });
+        }
+        continue;
+      }
 
+      const includes = service.shortDesc ? [service.shortDesc] : [];
       items.push({
         id: service.id,
         categoryId: cat.id,
         categoryName: cat.name,
         categorySlug: cat.slug,
-        name: priceRow?.title ?? service.title,
-        price: Number(priceRow?.amount ?? service.amount),
-        currency: priceRow?.currency ?? service.currency,
+        name: service.title,
+        price: Number(service.amount),
+        currency: service.currency,
         includes,
       });
     }
