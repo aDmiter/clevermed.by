@@ -116,10 +116,27 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   const { id } = await context.params;
 
+  const existing = await prisma.doctor.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "Врач не найден" }, { status: 404 });
+  }
+
   try {
     await prisma.doctor.delete({ where: { id } });
     return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: "Врач не найден" }, { status: 404 });
+  } catch (error) {
+    console.error("[doctors] DELETE failed:", error);
+    const message =
+      error instanceof Error ? error.message : "Не удалось удалить врача";
+    const hasAppointments = message.includes("Foreign key") ||
+      message.includes("foreign key");
+    return NextResponse.json(
+      {
+        error: hasAppointments
+          ? "Нельзя удалить: у врача есть записи на приём. Снимите «Опубликован» или удалите записи в календаре."
+          : "Не удалось удалить врача. Попробуйте снять «Опубликован».",
+      },
+      { status: 409 },
+    );
   }
 }

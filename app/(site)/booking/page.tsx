@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { metadataForPath } from "@/lib/page-seo-server";
 import { getSiteSettings } from "@/lib/site-settings-server";
 import { redirect } from "next/navigation";
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata() {
   return metadataForPath("/booking");

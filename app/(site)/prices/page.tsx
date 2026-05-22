@@ -5,6 +5,7 @@ import {
 } from "@/lib/prices";
 import { fetchPricesPageData } from "@/lib/prices-server";
 import { metadataForPath } from "@/lib/page-seo-server";
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata() {
   return metadataForPath("/prices");

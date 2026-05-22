@@ -1,0 +1,6 @@
+PassengerNodejs /home/a/admite/clevermed.by/clevermed-by/.node/bin/node
+PassengerAppRoot /home/a/admite/clevermed.by/clevermed-by
+PassengerAppType node
+PassengerStartupFile server.js
+PassengerAppEnv production
+SetEnv HOSTNAME 127.0.0.1

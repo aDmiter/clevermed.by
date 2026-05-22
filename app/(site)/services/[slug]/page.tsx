@@ -6,6 +6,7 @@ import {
   SERVICE_SLUGS,
 } from "@/lib/services-catalog";
 import { notFound } from "next/navigation";
+export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ slug: string }>;

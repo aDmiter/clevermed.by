@@ -1,6 +1,7 @@
 import { DoctorsPage } from "@/components/site/doctors-page";
 import { fetchPublishedDoctors } from "@/lib/doctors-server";
 import { metadataForPath } from "@/lib/page-seo-server";
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata() {
   return metadataForPath("/doctors");
