@@ -7,9 +7,10 @@
   },
   "scripts": {
     "dev": "next dev -p 3002",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && next build && node scripts/beget-postbuild.mjs",
     "start": "next start -p 3002",
     "start:beget": "NODE_ENV=production node server.js",
+    "beget:restart": "node -e \"require('fs').mkdirSync('tmp',{recursive:true}); require('fs').utimesSync('tmp/restart.txt', new Date(), new Date())\"",
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",

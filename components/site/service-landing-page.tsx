@@ -193,7 +193,6 @@ export function ServiceLandingPage({ content, doctors }: ServiceLandingPageProps
                   <span>{d.label}</span>
                 </div>
                 <div className="service-landing__diag-meta">
-                  <span>{d.time}</span>
                   <strong>{d.price}</strong>
                 </div>
               </div>

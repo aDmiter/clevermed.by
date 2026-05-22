@@ -1,35 +1,43 @@
 /**
- * Точка входа для Beget (Apache mod_passenger).
- * Слушает PORT из окружения Passenger.
+ * Beget + Apache Passenger: Next.js standalone
+ * @see docs/BEGET-DEPLOY-FOR-AGENTS.md
  */
-const { createServer } = require("http");
-const { parse } = require("url");
-const next = require("next");
+const fs = require("fs");
+const http = require("http");
+const path = require("path");
 
-const port = parseInt(process.env.PORT || "3000", 10);
-const hostname = process.env.HOSTNAME || "127.0.0.1";
-const dev = process.env.NODE_ENV !== "production";
+const root = __dirname;
+require("dotenv").config({ path: path.join(root, ".env") });
 
-const app = next({ dev, hostname, port, dir: __dirname });
-const handle = app.getRequestHandler();
+process.env.NODE_ENV = "production";
+process.env.HOSTNAME = "127.0.0.1";
 
-app
-  .prepare()
-  .then(() => {
-    createServer(async (req, res) => {
-      try {
-        const parsedUrl = parse(req.url, true);
-        await handle(req, res, parsedUrl);
-      } catch (err) {
-        console.error("Request error:", req.url, err);
-        res.statusCode = 500;
-        res.end("Internal Server Error");
-      }
-    }).listen(port, hostname, () => {
-      console.log(`Clevermed ready http://${hostname}:${port}`);
-    });
-  })
-  .catch((err) => {
-    console.error("Failed to start Next.js:", err);
-    process.exit(1);
-  });
+const standaloneDir = path.join(root, ".next", "standalone");
+const entry = path.join(standaloneDir, "server.js");
+
+if (!fs.existsSync(entry)) {
+  console.error("[clevermed] Не найдена сборка:", entry);
+  console.error("[clevermed] Выполните: npm run build");
+  process.exit(1);
+}
+
+const isPassenger = typeof PhusionPassenger !== "undefined";
+if (isPassenger) {
+  PhusionPassenger.configure({ autoInstall: false });
+}
+
+const originalListen = http.Server.prototype.listen;
+http.Server.prototype.listen = function patchedListen(...args) {
+  const callback =
+    typeof args[args.length - 1] === "function" ? args.pop() : undefined;
+
+  if (isPassenger) {
+    return originalListen.call(this, "passenger", callback);
+  }
+
+  const port = process.env.PORT || 3002;
+  return originalListen.call(this, port, "127.0.0.1", callback);
+};
+
+process.chdir(standaloneDir);
+require(entry);
