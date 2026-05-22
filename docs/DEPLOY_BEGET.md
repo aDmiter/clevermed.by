@@ -21,7 +21,7 @@
 export PATH=~/clevermed.by/clevermed-by/.node/bin:$PATH
 cd ~/clevermed.by/clevermed-by
 npm run build
-touch tmp/restart.txt
+mkdir -p tmp && touch tmp/restart.txt
 ```
 
 `npm install` — если менялся `package.json`.  

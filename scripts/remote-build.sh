@@ -6,7 +6,6 @@ cd "${HOME}/clevermed.by/clevermed-by"
 
 npm install
 npm run build
-mkdir -p tmp
-touch tmp/restart.txt
+mkdir -p tmp && touch tmp/restart.txt
 
 echo "[remote-build] Готово: $(date -Iseconds)"

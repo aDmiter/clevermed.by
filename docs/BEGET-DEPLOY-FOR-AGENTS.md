@@ -33,7 +33,7 @@
 export PATH=~/webo.by/webo-by/.node/bin:$PATH
 cd ~/webo.by/webo-by
 npm run build
-touch tmp/restart.txt
+mkdir -p tmp && touch tmp/restart.txt
 ```
 
 Добавить `npx prisma db push` только если менялся `prisma/schema.prisma`.  
@@ -102,7 +102,7 @@ npm install
 npm run build
 npx prisma db push
 mkdir -p tmp
-touch tmp/restart.txt
+mkdir -p tmp && touch tmp/restart.txt
 ```
 
 **Обычное обновление** (без `package.json` / без схемы Prisma):
@@ -111,7 +111,7 @@ touch tmp/restart.txt
 export PATH=~/clevermed.by/clevermed-by/.node/bin:$PATH
 cd ~/clevermed.by/clevermed-by
 npm run build
-touch tmp/restart.txt
+mkdir -p tmp && touch tmp/restart.txt
 ```
 
 ---
@@ -175,7 +175,7 @@ experimental: { cpus: 1 },
 
 ```bash
 mkdir -p tmp
-touch tmp/restart.txt
+mkdir -p tmp && touch tmp/restart.txt
 ```
 
 ---
@@ -187,7 +187,7 @@ touch tmp/restart.txt
 3. MySQL: создать БД, записать логин/пароль.
 4. На сервере создать `.env`.
 5. Node в `.node/bin`, настроить `.htaccess`.
-6. `npm install` → `npm run build` → при Prisma `npx prisma db push` → `touch tmp/restart.txt`.
+6. `npm install` → `npm run build` → при Prisma `npx prisma db push` → `mkdir -p tmp && touch tmp/restart.txt`.
 7. Проверить сайт; при 500 — логи панели / `tmp/passenger.log`.
 
 ---
@@ -205,7 +205,7 @@ export PATH=~/ПУТЬ/К/ПРОЕКТУ/.node/bin:$PATH
 cd ~/ПУТЬ/К/ПРОЕКТУ
 # npx prisma db push   # только если менялся prisma/schema.prisma
 npm run build
-touch tmp/restart.txt
+mkdir -p tmp && touch tmp/restart.txt
 ```
 
 `npm install` — только если менялся `package.json` / lockfile.
