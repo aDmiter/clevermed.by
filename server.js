@@ -7,7 +7,24 @@ const http = require("http");
 const path = require("path");
 
 const root = __dirname;
-require("dotenv").config({ path: path.join(root, ".env") });
+const logFile = path.join(root, "tmp", "passenger.log");
+
+function log(msg) {
+  const line = `${new Date().toISOString()} ${msg}\n`;
+  try {
+    fs.mkdirSync(path.dirname(logFile), { recursive: true });
+    fs.appendFileSync(logFile, line);
+  } catch {
+    // ignore
+  }
+  console.error(line.trim());
+}
+
+try {
+  require("dotenv").config({ path: path.join(root, ".env") });
+} catch (err) {
+  log(`dotenv: ${err.message}`);
+}
 
 process.env.NODE_ENV = "production";
 process.env.HOSTNAME = "127.0.0.1";
@@ -16,12 +33,18 @@ const standaloneDir = path.join(root, ".next", "standalone");
 const entry = path.join(standaloneDir, "server.js");
 
 if (!fs.existsSync(entry)) {
-  console.error("[clevermed] Не найдена сборка:", entry);
-  console.error("[clevermed] Выполните: npm run build");
+  log(`Не найдена сборка: ${entry}`);
+  log("Выполните на сервере: npm run build");
   process.exit(1);
 }
 
+if (!fs.existsSync(path.join(root, ".env"))) {
+  log("Нет файла .env в корне проекта");
+}
+
 const isPassenger = typeof PhusionPassenger !== "undefined";
+log(`start passenger=${isPassenger} node=${process.version}`);
+
 if (isPassenger) {
   PhusionPassenger.configure({ autoInstall: false });
 }
@@ -39,5 +62,11 @@ http.Server.prototype.listen = function patchedListen(...args) {
   return originalListen.call(this, port, "127.0.0.1", callback);
 };
 
-process.chdir(standaloneDir);
-require(entry);
+try {
+  process.chdir(standaloneDir);
+  require(entry);
+  log("standalone server.js загружен");
+} catch (err) {
+  log(err.stack || String(err));
+  process.exit(1);
+}

@@ -69,7 +69,21 @@ DATABASE_URL="mysql://admite_clevereac:ПАРОЛЬ_С_ПАНЕЛИ@localhost:33
 
 Остальные переменные — по README проекта clevermed-by (`ADMIN_*`, JWT secret и т.д.).
 
-### Пример `.htaccess` (`~/clevermed.by/.htaccess`)
+### Файл `.htaccess` — куда положить (важно)
+
+Без этого файла сайт даёт **403 Forbidden**.
+
+**Содержимое** — скопировать из `deploy/clevermed.by.htaccess` в репозитории (или блок ниже).
+
+**Куда:** в панели Beget → **Сайты** → **clevermed.by** → **Файловый менеджер**.
+
+1. Откройте папку сайта `clevermed.by` (не заходя в `clevermed-by`).
+2. Рядом с папками `clevermed-by` и `public_html` создайте файл **`.htaccess`**.
+3. Вставьте содержимое, сохраните.
+
+Если 403 остаётся — **скопируйте тот же файл** в `clevermed.by/public_html/.htaccess`.
+
+Путь на диске: `/home/a/admite/clevermed.by/.htaccess`
 
 ```apache
 PassengerNodejs /home/a/admite/clevermed.by/clevermed-by/.node/bin/node
@@ -78,6 +92,21 @@ PassengerAppType node
 PassengerStartupFile server.js
 PassengerAppEnv production
 SetEnv HOSTNAME 127.0.0.1
+```
+
+**Через терминал Beget** (если удобнее):
+
+```bash
+cat > ~/clevermed.by/.htaccess << 'EOF'
+PassengerNodejs /home/a/admite/clevermed.by/clevermed-by/.node/bin/node
+PassengerAppRoot /home/a/admite/clevermed.by/clevermed-by
+PassengerAppType node
+PassengerStartupFile server.js
+PassengerAppEnv production
+SetEnv HOSTNAME 127.0.0.1
+EOF
+mkdir -p ~/clevermed.by/clevermed-by/tmp
+touch ~/clevermed.by/clevermed-by/tmp/restart.txt
 ```
 
 **Node 20.18 не подходит.** Если `node -v` показывает `v20.18.x`, обновите (один раз):
@@ -101,7 +130,6 @@ rm -rf node_modules
 npm install
 npm run build
 npx prisma db push
-mkdir -p tmp
 mkdir -p tmp && touch tmp/restart.txt
 ```
 
@@ -224,6 +252,7 @@ mkdir -p tmp && touch tmp/restart.txt
 | Сборка падает | мало RAM | `experimental.cpus: 1` |
 | `Prisma only supports Node.js 20.19+` | Node 20.18 в `.node` | `./scripts/beget-install-node.sh`, затем `rm -rf node_modules && npm install` |
 | `EBADENGINE` Prisma | то же | обновить Node, не игнорировать |
+| Passenger «something went wrong» | нет сборки / нет `.env` / ошибка старта | `./scripts/beget-diagnose.sh`, смотреть `tmp/passenger.log` |
 
 ---
 
