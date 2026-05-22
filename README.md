@@ -24,3 +24,9 @@ npm run dev
 
 - Сайт: http://localhost:3002  
 - Админка: http://localhost:3002/admin/login  
+
+## Деплой на Beget
+
+Пошаговая инструкция для виртуального хостинга (Passenger + Node.js): **[docs/DEPLOY_BEGET.md](./docs/DEPLOY_BEGET.md)**.
+
+Кратко: SSH → Docker → Node в `~/.local` → `git clone` → `.env` → `npm ci` → `./scripts/beget-db-setup.sh` → `npm run build` → `.htaccess` + `server.js` → `ln -s public public_html`.
