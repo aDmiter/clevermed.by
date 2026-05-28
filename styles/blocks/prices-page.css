@@ -114,6 +114,115 @@
   border-color: transparent;
 }
 
+.prices-page__filter--active:hover {
+  color: #ffffff;
+  background: color-mix(in srgb, var(--color-primary-green) 88%, #000);
+  border-color: transparent;
+}
+
+.prices-page__accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.prices-page__category {
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.prices-page__category-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.prices-page__category-summary::-webkit-details-marker {
+  display: none;
+}
+
+.prices-page__category-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  color: color-mix(in srgb, var(--color-primary-dark) 55%, transparent);
+  background: color-mix(in srgb, var(--color-secondary-mint) 55%, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--color-primary-green) 12%, transparent);
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.prices-page__category[open] .prices-page__category-chevron {
+  transform: rotate(180deg);
+  color: var(--color-primary-green);
+  border-color: color-mix(in srgb, var(--color-primary-green) 25%, transparent);
+}
+
+.prices-page__category-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--color-primary-dark);
+}
+
+.prices-page__category-min {
+  flex-shrink: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-primary-green);
+}
+
+.prices-page__category-body {
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 1rem 1.25rem 1.25rem;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.prices-page__category[open] .prices-page__category-summary {
+  background: rgba(230, 244, 239, 0.55);
+}
+
+.prices-page__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.prices-page__group-divider {
+  margin: 2rem 0 1.5rem;
+  height: 1px;
+  background: var(--color-neutral-border);
+}
+
+.prices-page__group-title {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-primary-dark);
+}
+
+.prices-page__group:first-child .prices-page__group-title {
+  margin-top: 0;
+}
+
 .prices-page__list {
   display: flex;
   flex-direction: column;
