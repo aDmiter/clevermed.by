@@ -244,14 +244,14 @@ export function HomePage() {
               </p>
               <div className="flex items-center gap-4">
                 <Image
-                  src="https://images.unsplash.com/photo-1684607632599-748b1792a116?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYXBweSUyMHBhdGllbnQlMjBzbWlsaW5nJTIwY2xpbmljfGVufDF8fHx8MTc3OTM1MDI2M3ww&ixlib=rb-4.1.0&q=80&w=100"
-                  alt="Пациент"
+                  src="/images/dmitriy.png"
+                  alt="Дмитрий С."
                   width={48}
                   height={48}
                   className="h-12 w-12 rounded-full object-cover"
                 />
                 <div>
-                  <h4 className="font-bold text-primary-dark">Мария С.</h4>
+                  <h4 className="font-bold text-primary-dark">Дмитрий С.</h4>
                   <p className="text-sm text-primary-dark/60">
                     Проверенный пациент
                   </p>
